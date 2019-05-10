@@ -12,15 +12,21 @@ Use a 1 to 1 ratio of pictures when taking pictures from screen can achieve bett
 ## Requirement
 The python library of `PIL`, `pyqrcode` and `pyzbar` are required.
 ## Usage
+### common
 * `--input`: the input file of converting to qr-code, or folders of images to decode.
 * `--output`: the output folder for qr-code, or target file to export from qr-code.
 * `--chunk_size`: the number of byte for each data to store for each qr-code.
-* `--quality`: error allowance, L, M, Q, H from low to high.
 * `--cpu_number`: the number of cpu to process files.
+### qr.py
+* `--quality`: error allowance, L, M, Q, H from low to high.
+### jab.py
+* `--image_size`: the size of image `(1~32)`.
+* `--color_number`: the color number of image `2^[2~8]`.
+* `--quality`: error allowance `(1~10)`.
 ## Demo
-Type `python converter.py -i demo -o mozart_11.mid`, it converts one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
+Type `python xxx.py -i demo -o mozart_11.mid`, where `xxx` represents `qr` or `jab`, it converts one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
 
-Of course, the script `python converter.py -o demo -i mozart_11.mid` is the reverse way of converting back from the file to multiple qr-code images.
+Of course, the script `python xxx.py -o demo -i mozart_11.mid` is the reverse way of converting back from the file to multiple qr-code images.
 ## Disclaimer
 This project can only be used under the law of the state or country from any user.
 
