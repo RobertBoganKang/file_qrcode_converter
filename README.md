@@ -1,6 +1,6 @@
 # File & QR-Code Converter
 ## Introduction
-For some reason, some file (such as document, script, or pictures) cannot be copied from any computer (for example, from companies, organizations or government), however, his project allows us to export small file through QR Code:)
+For some reason, some file (such as document, script, or pictures) cannot be copied from any computer (for example, from companies, organizations or government), however, this project allows us to export small file through QR Code:)
 
 Unfortunately, it can support only one file of conversion (be sure to pack all files in only one file). 
 
