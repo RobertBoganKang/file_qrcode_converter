@@ -2,6 +2,7 @@ import argparse
 import base64
 import multiprocessing
 import os
+import shutil
 import zlib
 
 from PIL import Image
@@ -148,8 +149,14 @@ class QR2File(DecoderUtil):
 
     def separate_all_image(self):
         print('separating image channels ~')
-        names = os.listdir(self.input)
-        names = [x for x in names if not x.startswith('#_') and '.' in x]
+        names_ = os.listdir(self.input)
+        names = []
+        # select and clean all other files
+        for x in names_:
+            if not x.startswith('#_') and '.' in x:
+                names.append(x)
+            else:
+                os.remove(os.path.join(self.input, x))
         fs = []
         for name in names:
             fs.append(os.path.join(self.input, name))
@@ -226,6 +233,38 @@ class File2QR(EncoderUtil):
         self.chunk_size = ops.chunk_size
         self.quality = ops.quality
         self.cpu_number = self.cpu_count(ops.cpu_number)
+        self.check_output_folder()
+
+    def ask_for_new_path(self):
+        new_path = input('please type new path for exporting qr-code:')
+        self.output = new_path
+
+    def check_output_folder(self):
+        # if path not exist, make directory and return
+        if not os.path.exists(self.output):
+            os.makedirs(self.output, exist_ok=True)
+            return
+
+        if not os.path.isdir(self.output):
+            self.ask_for_new_path()
+            self.check_output_folder()
+        else:
+            names = os.listdir(self.output)
+            if len(names) != 0:
+                while True:
+                    check = input('the folder is not empty, do you with to remove them [y/n]: ')
+                    if check == '':
+                        continue
+                    if check.strip().lower() in ['yes', 'yeah', 'yep', 'y']:
+                        shutil.rmtree(self.output)
+                        os.makedirs(self.output)
+                        return
+                    elif check.strip().lower() in ['no', 'n']:
+                        self.ask_for_new_path()
+                        self.check_output_folder()
+                        return
+                    else:
+                        print('input not recognized!')
 
     def prepare_qr_code_image(self, data, out_path):
         import pyqrcode
@@ -243,7 +282,6 @@ class File2QR(EncoderUtil):
     def export_qr_code(self):
         chunks_raw = self.create_chunks()
         chunks_raw = [(i, x) for i, x in enumerate(chunks_raw)]
-        os.makedirs(self.output, exist_ok=True)
         pool = multiprocessing.Pool(self.cpu_number)
         pool.map(self.export_qr_code_helper, chunks_raw)
 
