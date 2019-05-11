@@ -19,6 +19,7 @@ The python library of `pillow`, `qrcode`, `pypng` and `pyzbar` are required.
 * `--cpu_number`: the number of cpu to process files.
 * `--quality`: error allowance, L, M, Q, H from low to high.
 * `--black_white`: the black and white regular qr-code if have, otherwise the RGB color mode.
+* `--index_byte`: the number of byte for indexes encoding, default is 2 (danger!! user may now know this number).
 ## Demo
 Type `python convert.py -i demo -o mozart_11.mid`, it decodes one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
 
