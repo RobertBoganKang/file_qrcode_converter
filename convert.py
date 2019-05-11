@@ -120,6 +120,7 @@ class EncoderUtil(CommonUtils):
 ############################
 # QR-Code & File Converter #
 ############################
+
 class QR2File(DecoderUtil):
     """ decode """
 
@@ -240,6 +241,10 @@ class File2QR(EncoderUtil):
     def merge_image(f):
         img_arr, out_path = f
         rgb = [Image.open(x).convert('L') for x in img_arr]
+        # size check
+        sizes = [x.size for x in rgb]
+        if not (sizes[0] == sizes[1] and sizes[1] == sizes[2]):
+            rgb = [x.resize(sizes[0]) for x in rgb]
         new_image = Image.merge('RGB', rgb)
         new_image.save(out_path)
         # remove used image
