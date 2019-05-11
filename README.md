@@ -20,9 +20,9 @@ The python library of `PIL`, `qrcode` and `pyzbar` are required.
 * `--quality`: error allowance, L, M, Q, H from low to high.
 * `--black_white`: the black and white regular qr-code if have, otherwise the RGB color mode.
 ## Demo
-Type `python qr.py -i demo -o mozart_11.mid`, it converts one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
+Type `python convert.py -i demo -o mozart_11.mid`, it converts one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
 
-Of course, the script `python qr.py -o demo -i mozart_11.mid` is the reverse way of converting back from the file to multiple qr-code images.
+Of course, the script `python convert.py -o demo -i mozart_11.mid` is the reverse way of converting back from the file to multiple qr-code images.
 ## Disclaimer
 This project can only be used under the law of the state or country from any user.
 
