@@ -2,7 +2,6 @@ import argparse
 import base64
 import multiprocessing
 import os
-import shutil
 import zlib
 
 from PIL import Image
@@ -13,9 +12,13 @@ from PIL import Image
 ################
 
 class CommonUtils(object):
-    def __init__(self):
+    def __init__(self, ops):
         # the number of byte to store index
-        self.idx_byte = 2
+        self.idx_byte = ops.index_byte
+        # color space (CMYK does not work)
+        self.color_space = 'RGB'
+        self.color_dim = len(self.color_space)
+        self.out_format = self.determine_format()
 
     @staticmethod
     def cpu_count(cpu_count):
@@ -28,10 +31,16 @@ class CommonUtils(object):
             cpu_count = max_cpu
         return cpu_count
 
+    def determine_format(self):
+        if self.color_space.lower() != 'rgb':
+            return '.tif'
+        else:
+            return '.png'
+
 
 class DecoderUtil(CommonUtils):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, ops):
+        super().__init__(ops)
 
     @staticmethod
     def byte_to_index(index_array):
@@ -64,7 +73,7 @@ class DecoderUtil(CommonUtils):
 
 class EncoderUtil(CommonUtils):
     def __init__(self, ops):
-        super().__init__()
+        super().__init__(ops)
         self.input = ops.input
         self.output = ops.output
         self.chunk_size = ops.chunk_size
@@ -96,10 +105,10 @@ class EncoderUtil(CommonUtils):
         byte_array = zlib.compress(byte_array)
         i = 0
         file_counter = 0
-        bucket = [0, 0, 0, 0]
+        bucket = [0 for _ in range(self.idx_byte * 2)]
         chunks = []
         while i < len(byte_array):
-            # check chunk length not to exceed 65536 files
+            # check chunk length not to exceed 2^(8*idx_byte) files
             if file_counter >= 2 ** (self.idx_byte * 8):
                 raise OverflowError('number of images is [{}] > {}!'.format(len(chunks), 2 ** (self.idx_byte * 8)))
             if (i + self.idx_byte) % (self.chunk_size - self.idx_byte) == 0:
@@ -125,7 +134,7 @@ class QR2File(DecoderUtil):
     """ decode """
 
     def __init__(self, ops):
-        super().__init__()
+        super().__init__(ops)
         self.input = ops.input
         self.output = ops.output
         self.cpu_number = self.cpu_count(ops.cpu_number)
@@ -133,15 +142,14 @@ class QR2File(DecoderUtil):
     # separate channels of image
     def separate_image(self, img_path):
         name = os.path.splitext(os.path.split(img_path)[1])[0]
-        r, g, b = Image.open(img_path).convert('RGB').split()
-        r.save(os.path.join(self.input, '#_' + str(name) + '_r.png'))
-        g.save(os.path.join(self.input, '#_' + str(name) + '_g.png'))
-        b.save(os.path.join(self.input, '#_' + str(name) + '_b.png'))
+        color_channels = Image.open(img_path).convert(self.color_space).split()
+        for i in range(self.color_dim):
+            color_channels[i].save(os.path.join(self.input, '#_' + str(name) + '_' + self.color_space[i] + '.png'))
 
     def separate_all_image(self):
         print('separating image channels ~')
         names = os.listdir(self.input)
-        names = [x for x in names if not x.startswith('#') and '.' in x]
+        names = [x for x in names if not x.startswith('#_') and '.' in x]
         fs = []
         for name in names:
             fs.append(os.path.join(self.input, name))
@@ -166,12 +174,15 @@ class QR2File(DecoderUtil):
                 continue
             else:
                 return data
-        raise RuntimeError('{} cannot be decoded, please replace it with new image!'.format(path))
+        print('[{}] cannot be decoded, please replace it with new image!'.format(path))
+        return None
 
     def extract_helper(self, f):
         """ extract bytes """
         in_path = os.path.join(self.input, f)
         data = self.try_size_to_decode(in_path)
+        if data is None:
+            return
         data = data[0].data
         data_effective, idx = self.get_data(data)
         print('[{}] has been analyzed ~'.format(f))
@@ -187,7 +198,7 @@ class QR2File(DecoderUtil):
         max_chunk = multiprocessing.Value('i')
         pool = multiprocessing.Pool(self.cpu_number)
         fs = os.listdir(self.input)
-        fs = [x for x in fs if x.startswith('#')]
+        fs = [x for x in fs if x.startswith('#_')]
         pool.map(self.extract_helper, fs)
 
         data_rebuild = b''
@@ -236,43 +247,54 @@ class File2QR(EncoderUtil):
         pool = multiprocessing.Pool(self.cpu_number)
         pool.map(self.export_qr_code_helper, chunks_raw)
 
-    # combine image into rgb channels
-    @staticmethod
-    def merge_image(f):
+    # combine image into image channels
+    def merge_image(self, f):
         img_arr, out_path = f
-        rgb = [Image.open(x).convert('L') for x in img_arr]
+        color_channels = [Image.open(x).convert('L') for x in img_arr]
         # size check
-        sizes = [x.size for x in rgb]
-        if not (sizes[0] == sizes[1] and sizes[1] == sizes[2]):
-            rgb = [x.resize(sizes[0]) for x in rgb]
-        new_image = Image.merge('RGB', rgb)
+        sizes = [x.size for x in color_channels]
+        is_size_equal = True
+        for i in range(len(sizes) - 1):
+            is_size_equal = is_size_equal and sizes[i] == sizes[i + 1]
+        if not is_size_equal:
+            color_channels = [x.resize(sizes[0]) for x in color_channels]
+        new_image = Image.merge(self.color_space, color_channels)
         new_image.save(out_path)
         # remove used image
         for i in img_arr:
             os.remove(i)
         print('[{}] has been merged successfully ~'.format(out_path))
 
+    def convert_image_color_space(self, in_path, out_path):
+        img = Image.open(in_path).convert('L')
+        color_channel = [img for _ in range(self.color_dim)]
+        new_img = Image.merge(self.color_space, color_channel)
+        new_img.save(out_path)
+        os.remove(in_path)
+
     def replace_with_merged_image(self):
         print('-' * 50)
         names = os.listdir(self.output)
         names = [x for x in names if x.startswith('t')]
-        length = (len(names) - 1) // 3
+        length = (len(names) - 1) // self.color_dim
         fs = []
         if length > 0:
             for i in range(length):
-                out_path = os.path.join(self.output, str(i) + '.png')
-                img_array = [os.path.join(self.output, 't' + str(x) + '.png') for x in range(i * 3, (i + 1) * 3)]
+                out_path = os.path.join(self.output, str(i) + self.out_format)
+                img_array = [os.path.join(self.output, 't' + str(x) + '.png') for x in
+                             range(i * self.color_dim, (i + 1) * self.color_dim)]
                 fs.append((img_array, out_path))
         pool = multiprocessing.Pool(self.cpu_number)
         pool.map(self.merge_image, fs)
 
         # change name of last few images
-        if length * 3 < len(names):
+        if length * self.color_dim < len(names):
             i = length
-            for j in range(length * 3, len(names)):
-                out_path = os.path.join(self.output, str(i) + '.png')
-                shutil.move(os.path.join(self.output, 't' + str(j) + '.png'), out_path)
-                print('[{}] name has been changed successfully ~'.format(out_path))
+            for j in range(length * self.color_dim, len(names)):
+                in_path = os.path.join(self.output, 't' + str(j) + '.png')
+                out_path = os.path.join(self.output, str(i) + self.out_format)
+                self.convert_image_color_space(in_path, out_path)
+                print('[{}] color has been converted successfully ~'.format(out_path))
                 i += 1
 
 
@@ -287,6 +309,10 @@ if __name__ == '__main__':
     # argument for qr-code
     parser.add_argument('--quality', '-q', type=str, help='the quality of qr-code: L, M, Q, H', default='L')
     parser.add_argument('--black_white', '-bw', action='store_true', help='the black white mode for qr-code if have')
+
+    # encode control (Danger!!)
+    parser.add_argument('--index_byte', '-x', type=int, help='the byte of index info have been used', default=2)
+
     args = parser.parse_args()
 
     if os.path.exists(args.input) and os.path.isfile(args.input):
