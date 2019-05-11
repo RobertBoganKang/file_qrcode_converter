@@ -4,13 +4,13 @@ For some reason, some file (such as document, script, or pictures) cannot be cop
 
 Unfortunately, it can support only one file of conversion (be sure to pack all files in only one file). 
 
-Only small files are allowed since one QR Code can only store around or less than 1kB data (maximum of 65536 qr-code are supported).
+Only small files are allowed since one QR Code can only store as much as 6kb data (maximum of 65536 qr-code are supported).
 
 It is safe to use since multiple way of file checking will ensure NO DATA WILL LOSS from any conversion.
 ### Taking pictures
-Use a 1 to 1 ratio of pictures when taking pictures from screen can achieve better result.
+Use camera with 1 to 1 ratio of pictures when taking pictures from screen can achieve better result.
 ## Requirement
-The python library of `PIL`, `pyqrcode` and `pyzbar` are required.
+The python library of `PIL`, `qrcode` and `pyzbar` are required.
 ## Usage
 ### common
 * `--input`: the input file of converting to qr-code, or folders of images to decode.
@@ -19,12 +19,14 @@ The python library of `PIL`, `pyqrcode` and `pyzbar` are required.
 * `--cpu_number`: the number of cpu to process files.
 ### qr.py
 * `--quality`: error allowance, L, M, Q, H from low to high.
+* `--black_white`: the black and white qr-code if have, otherwise the RGB color mode.
 ### jab.py
+jabcode is also implemented, but need more research to get good result.
 * `--image_size`: the size of image `(1~32)`.
 * `--color_number`: the color number of image `2^[2~8]`.
 * `--quality`: error allowance `(1~10)`.
 ## Demo
-Type `python xxx.py -i demo -o mozart_11.mid`, where `xxx` represents `qr` or `jab`, it converts one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
+Type `python qr.py -i demo -o mozart_11.mid`, it converts one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
 
 Of course, the script `python xxx.py -o demo -i mozart_11.mid` is the reverse way of converting back from the file to multiple qr-code images.
 ## Disclaimer

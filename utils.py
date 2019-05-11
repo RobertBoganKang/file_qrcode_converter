@@ -4,6 +4,10 @@ import zlib
 
 
 class CommonUtils(object):
+    def __init__(self):
+        # the number of byte to store index
+        self.idx_byte = 2
+
     @staticmethod
     def cpu_count(cpu_count):
         """
@@ -17,6 +21,8 @@ class CommonUtils(object):
 
 
 class Code2File(CommonUtils):
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
     def byte_to_index(index_array):
@@ -38,17 +44,18 @@ class Code2File(CommonUtils):
     def get_data(self, data, max_chunk):
         # decode letters to bytes
         data = self.string_to_byte_array(data)
-        idx = self.byte_to_index(data[:2])
+        idx = self.byte_to_index(data[:self.idx_byte])
         if idx == 0:
-            data_effective = data[4:]
-            max_chunk.value = self.byte_to_index(data[2:4])
+            data_effective = data[2 * self.idx_byte:]
+            max_chunk.value = self.byte_to_index(data[self.idx_byte:2 * self.idx_byte])
         else:
-            data_effective = data[2:]
+            data_effective = data[self.idx_byte:]
         return data_effective, idx
 
 
 class File2Code(CommonUtils):
     def __init__(self, ops):
+        super().__init__()
         self.input = ops.input
         self.output = ops.output
         self.chunk_size = ops.chunk_size
@@ -77,15 +84,16 @@ class File2Code(CommonUtils):
     def create_chunks(self):
         with open(self.input, 'rb') as f:
             byte_array = f.read()
+        byte_array = zlib.compress(byte_array)
         i = 0
         file_counter = 0
         bucket = [0, 0, 0, 0]
         chunks = []
         while i < len(byte_array):
             # check chunk length not to exceed 65536 files
-            if file_counter >= 2 ** 16:
-                raise OverflowError('number of images is [{}] > 65536!'.format(len(chunks)))
-            if (i + 2) % (self.chunk_size - 2) == 0:
+            if file_counter >= 2 ** (self.idx_byte * 8):
+                raise OverflowError('number of images is [{}] > {}!'.format(len(chunks), 2 ** (self.idx_byte * 8)))
+            if (i + self.idx_byte) % (self.chunk_size - self.idx_byte) == 0:
                 chunks.append(self.index_to_byte(file_counter) + bucket)
                 bucket = []
                 file_counter += 1
@@ -96,5 +104,5 @@ class File2Code(CommonUtils):
 
         # make up total chunk size marker
         chunk_size = self.index_to_byte(len(chunks))
-        chunks[0][2:4] = chunk_size
+        chunks[0][self.idx_byte:2 * self.idx_byte] = chunk_size
         return chunks
