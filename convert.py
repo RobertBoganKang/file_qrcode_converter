@@ -237,25 +237,30 @@ class File2QR(EncoderUtil):
 
     # combine image into rgb channels
     @staticmethod
-    def merge_image(img_arr, out_path):
+    def merge_image(f):
+        img_arr, out_path = f
         rgb = [Image.open(x).convert('L') for x in img_arr]
         new_image = Image.merge('RGB', rgb)
         new_image.save(out_path)
         # remove used image
         for i in img_arr:
             os.remove(i)
+        print('[{}] has been merged successfully ~'.format(out_path))
 
     def replace_with_merged_image(self):
         print('-' * 50)
         names = os.listdir(self.output)
         names = [x for x in names if x.startswith('t')]
         length = (len(names) - 1) // 3
+        fs = []
         if length > 0:
             for i in range(length):
                 out_path = os.path.join(self.output, str(i) + '.png')
                 img_array = [os.path.join(self.output, 't' + str(x) + '.png') for x in range(i * 3, (i + 1) * 3)]
-                self.merge_image(img_array, out_path)
-                print('[{}] has been merged successfully ~'.format(out_path))
+                fs.append((img_array, out_path))
+        pool = multiprocessing.Pool(self.cpu_number)
+        pool.map(self.merge_image, fs)
+
         # change name of last few images
         if length * 3 < len(names):
             i = length
