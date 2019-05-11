@@ -17,14 +17,8 @@ The python library of `PIL`, `qrcode` and `pyzbar` are required.
 * `--output`: the output folder for qr-code, or target file to export from qr-code.
 * `--chunk_size`: the number of byte for each data to store for each qr-code.
 * `--cpu_number`: the number of cpu to process files.
-### qr.py
 * `--quality`: error allowance, L, M, Q, H from low to high.
 * `--black_white`: the black and white qr-code if have, otherwise the RGB color mode.
-### jab.py
-jabcode is also implemented, but need more research to get good result.
-* `--image_size`: the size of image `(1~32)`.
-* `--color_number`: the color number of image `2^[2~8]`.
-* `--quality`: error allowance `(1~10)`.
 ## Demo
 Type `python qr.py -i demo -o mozart_11.mid`, it converts one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
 
