@@ -158,7 +158,6 @@ class QR2File(DecoderUtil):
                 names.append(x)
             else:
                 path = os.path.join(self.input, x)
-                print('[{}] has been deleted ~'.format(path))
                 os.remove(path)
         fs = []
         for name in names:
@@ -200,7 +199,8 @@ class QR2File(DecoderUtil):
         if not os.path.exists(export_path):
             with open(export_path, 'wb') as w:
                 w.write(data_effective)
-        os.remove(in_path)
+        if not self.black_white:
+            os.remove(in_path)
 
     def extract_data_from_qr(self):
         """ main function for extraction"""
@@ -214,12 +214,11 @@ class QR2File(DecoderUtil):
             for x in names_:
                 if x.startswith('#_') or '.' not in x:
                     path = os.path.join(self.input, x)
-                    print('[{}] has been deleted ~'.format(path))
                     os.remove(path)
                 elif '.' in x:
                     names.append(x)
         else:
-            names = [x for x in names if x.startswith('#_')]
+            names = [x for x in names_ if x.startswith('#_')]
         pool.map(self.extract_helper, names)
 
         data_rebuild = b''
