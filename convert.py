@@ -139,6 +139,7 @@ class QR2File(DecoderUtil):
         self.input = ops.input
         self.output = ops.output
         self.cpu_number = self.cpu_count(ops.cpu_number)
+        self.black_white = ops.black_white
 
     # separate channels of image
     def separate_image(self, img_path):
@@ -156,7 +157,9 @@ class QR2File(DecoderUtil):
             if not x.startswith('#_') and '.' in x:
                 names.append(x)
             else:
-                os.remove(os.path.join(self.input, x))
+                path = os.path.join(self.input, x)
+                print('[{}] has been deleted ~'.format(path))
+                os.remove(path)
         fs = []
         for name in names:
             fs.append(os.path.join(self.input, name))
@@ -204,9 +207,20 @@ class QR2File(DecoderUtil):
         global max_chunk
         max_chunk = multiprocessing.Value('i')
         pool = multiprocessing.Pool(self.cpu_number)
-        fs = os.listdir(self.input)
-        fs = [x for x in fs if x.startswith('#_')]
-        pool.map(self.extract_helper, fs)
+        names = []
+        names_ = os.listdir(self.input)
+        # select and clean all other files
+        if self.black_white:
+            for x in names_:
+                if x.startswith('#_') or '.' not in x:
+                    path = os.path.join(self.input, x)
+                    print('[{}] has been deleted ~'.format(path))
+                    os.remove(path)
+                elif '.' in x:
+                    names.append(x)
+        else:
+            names = [x for x in names if x.startswith('#_')]
+        pool.map(self.extract_helper, names)
 
         data_rebuild = b''
         for i in range(max_chunk.value):
