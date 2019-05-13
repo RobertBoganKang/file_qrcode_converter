@@ -10,7 +10,8 @@ It is safe to use since multiple way of file checking will ensure NO DATA WILL L
 ### Taking pictures
 Use camera with 1 to 1 ratio of pictures when taking pictures from screen can achieve better result.
 ## Requirement
-The python library of `pillow`, `pyqrcode`, `pypng` and `pyzbar` are required.
+The python library of `pillow`, `pyqrcode`, `pypng`, `zbar` and `pyzbar` are required.
+The system libary of `libzbar` is also needed (ubuntu: `apt-get install libzbar-dev`).
 ## Usage
 ### common
 * `--input`: the input file of converting to qr-code, or folders of images to decode.
