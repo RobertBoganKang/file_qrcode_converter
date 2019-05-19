@@ -71,6 +71,11 @@ class DecoderUtil(CommonUtils):
             data_effective = data[self.idx_byte:]
         return data_effective, idx
 
+    @staticmethod
+    def bytes_to_file_name(b):
+        d = [x for x in b if x != 0]
+        return bytes(d).decode()
+
 
 class EncoderUtil(CommonUtils):
     def __init__(self, ops):
@@ -97,12 +102,22 @@ class EncoderUtil(CommonUtils):
         return index_array
 
     @staticmethod
+    def path_to_bytes(path):
+        path = os.path.split(path)[1]
+        b = path.encode()
+        for _ in range(256 - len(b)):
+            b += b'\x00'
+        return b
+
+    @staticmethod
     def byte_array_to_string(b):
         return base64.b64encode(zlib.compress(bytes(b)))
 
     def create_chunks(self):
         with open(self.input, 'rb') as f:
             byte_array = f.read()
+        # add file name here
+        byte_array = self.path_to_bytes(self.input) + byte_array
         byte_array = zlib.compress(byte_array)
         i = 0
         file_counter = 0
@@ -111,7 +126,7 @@ class EncoderUtil(CommonUtils):
         while i < len(byte_array):
             # check chunk length not to exceed 2^(8*idx_byte) files
             if file_counter >= 2 ** (self.idx_byte * 8):
-                raise OverflowError('number of images is [{}] > {}!'.format(len(chunks), 2 ** (self.idx_byte * 8)))
+                raise OverflowError(f'number of images is [{len(chunks)}] > {2 ** (self.idx_byte * 8)}!')
             if (i + self.idx_byte) % (self.chunk_size - self.idx_byte) == 0:
                 chunks.append(self.index_to_byte(file_counter) + bucket)
                 bucket = []
@@ -183,7 +198,7 @@ class QR2File(DecoderUtil):
                 continue
             else:
                 return data
-        print('[{}] cannot be decoded, please replace it with new image!'.format(path))
+        print(f'[{path}] cannot be decoded, please replace it with new image!')
         return None
 
     def extract_helper(self, f):
@@ -194,7 +209,7 @@ class QR2File(DecoderUtil):
             return
         data = data[0].data
         data_effective, idx = self.get_data(data)
-        print('[{}] has been analyzed ~'.format(f))
+        print(f'[{f}] has been analyzed ~')
         export_path = os.path.join(self.input, str(idx))
         if not os.path.exists(export_path):
             with open(export_path, 'wb') as w:
@@ -231,9 +246,18 @@ class QR2File(DecoderUtil):
         data_rebuild = zlib.decompress(data_rebuild)
 
         print('-' * 50)
+        # extract file name
+        file_name = self.bytes_to_file_name(data_rebuild[:256])
+        data_rebuild = data_rebuild[256:]
+        if os.path.isdir(self.output):
+            self.output = os.path.join(self.output, file_name)
+        else:
+            os.makedirs(os.path.dirname(self.output), exist_ok=True)
+            self.output = os.path.join(os.path.dirname(self.output),
+                                       os.path.split(self.output)[1] + os.path.splitext(file_name)[1])
         with open(self.output, 'wb') as w:
             w.write(data_rebuild)
-        print('[{}] has been exported ~'.format(self.output))
+        print(f'[{self.output}] has been exported ~')
 
 
 class File2QR(EncoderUtil):
@@ -265,10 +289,10 @@ class File2QR(EncoderUtil):
             names = os.listdir(self.output)
             if len(names) != 0:
                 while True:
-                    check = input('the folder is not empty, do you with to remove them [y/n]: ')
+                    check = input('the folder is not empty, do you wish to remove them [y/n]: ')
                     if check == '':
                         continue
-                    if check.strip().lower() in ['yes', 'yeah', 'yep', 'y']:
+                    if check.strip().lower() in ['yes', 'y']:
                         shutil.rmtree(self.output)
                         os.makedirs(self.output)
                         return
@@ -290,7 +314,7 @@ class File2QR(EncoderUtil):
         compressed = self.byte_array_to_string(chunk)
         path = os.path.join(self.output, 't' + str(i) + '.png')
         self.prepare_qr_code_image(compressed, path)
-        print('[{}] has been export successfully ~'.format(path))
+        print(f'[{path}] has been export successfully ~')
 
     def export_qr_code(self):
         chunks_raw = self.create_chunks()
@@ -314,7 +338,7 @@ class File2QR(EncoderUtil):
         # remove used image
         for i in img_arr:
             os.remove(i)
-        print('[{}] has been merged successfully ~'.format(out_path))
+        print(f'[{out_path}] has been merged successfully ~')
 
     def convert_image_color_space(self, in_path, out_path):
         img = Image.open(in_path).convert('L')
@@ -345,7 +369,7 @@ class File2QR(EncoderUtil):
                 in_path = os.path.join(self.output, 't' + str(j) + '.png')
                 out_path = os.path.join(self.output, str(i) + self.out_format)
                 self.convert_image_color_space(in_path, out_path)
-                print('[{}] color has been converted successfully ~'.format(out_path))
+                print(f'[{out_path}] color has been converted successfully ~')
                 i += 1
 
 
@@ -353,7 +377,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='convert file to qr code')
     # argument for project
     parser.add_argument('--input', '-i', type=str, help='the source', default='demo')
-    parser.add_argument('--output', '-o', type=str, help='the target', default='mozart_11.mid')
+    parser.add_argument('--output', '-o', type=str, help='the target', default=os.path.abspath('.'))
     parser.add_argument('--chunk_size', '-s', type=int, help='chunk size to encode', default=2048)
     parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
 
@@ -367,14 +391,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if os.path.exists(args.input) and os.path.isfile(args.input):
-        print('now encoding from [{}] to [{}] ~'.format(args.input, args.output))
+        print(f'now encoding from [{args.input}] to [{args.output}] ~')
         print('-' * 50)
         f2qr = File2QR(args)
         f2qr.export_qr_code()
         if not args.black_white:
             f2qr.replace_with_merged_image()
     elif os.path.exists(args.input) and os.path.isdir(args.input):
-        print('now decoding from [{}] to [{}] ~'.format(args.input, args.output))
+        print(f'now decoding from [{args.input}] to [{args.output}] ~')
         print('-' * 50)
         qr2f = QR2File(args)
         if not args.black_white:
