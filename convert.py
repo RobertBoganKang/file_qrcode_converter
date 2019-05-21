@@ -38,6 +38,20 @@ class CommonUtils(object):
         else:
             return '.png'
 
+    @staticmethod
+    def fix_out_path(input_path, output_path):
+        """
+        the default folder is set to `#__[<input_name>]__#`.
+        """
+        input_path = os.path.abspath(input_path)
+        if output_path is None:
+            name = os.path.splitext(os.path.split(input_path)[1])[0]
+            out_path = os.path.join(os.path.dirname(input_path), '#__[' + name + ']__#')
+            os.makedirs(out_path, exist_ok=True)
+        else:
+            out_path = os.path.abspath(output_path)
+        return out_path
+
 
 class DecoderUtil(CommonUtils):
     def __init__(self, ops):
@@ -81,7 +95,7 @@ class EncoderUtil(CommonUtils):
     def __init__(self, ops):
         super().__init__(ops)
         self.input = ops.input
-        self.output = ops.output
+        self.output = self.fix_out_path(self.input, ops.output)
         self.chunk_size = ops.chunk_size
         self.cpu_number = self.cpu_count(ops.cpu_number)
 
@@ -152,7 +166,7 @@ class QR2File(DecoderUtil):
     def __init__(self, ops):
         super().__init__(ops)
         self.input = ops.input
-        self.output = ops.output
+        self.output = self.fix_out_path(self.input, ops.output)
         self.cpu_number = self.cpu_count(ops.cpu_number)
         self.black_white = ops.black_white
 
@@ -377,7 +391,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='convert file to qr code')
     # argument for project
     parser.add_argument('--input', '-i', type=str, help='the source', default='demo')
-    parser.add_argument('--output', '-o', type=str, help='the target', default=os.path.abspath('.'))
+    parser.add_argument('--output', '-o', type=str, help='the target', default=None)
     parser.add_argument('--chunk_size', '-s', type=int, help='chunk size to encode', default=2048)
     parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
 

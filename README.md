@@ -26,7 +26,7 @@ Type `python convert.py -i demo -o mozart_11.mid`, it decodes one or multiple qr
 
 Of course, the script `python convert.py -o demo -i mozart_11.mid` is the reverse way of encoding back from the file to multiple qr-code images.
 
-Since the file name are also stored in the qr-code, for the decoding part, if the output is the folder, the program will restore the file within this folder. Namely, type `python convert.py -i demo -o <folder>`, the `mozart_11.mid` file will appear within `<folder>`.
+Since the file name are also stored in the qr-code, for the decoding part, if the output is the folder, the program will restore the file within this folder. Namely, type `python convert.py -i demo -o <folder>`, the `mozart_11.mid` file will appear within `<folder>`. If output is not defined, a new folder with name pattern `#__[<name>]__#` will appear at the same level of the input path.
 ## Disclaimer
 This project can only be used under the law of the state or country from any user.
 
