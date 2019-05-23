@@ -39,14 +39,17 @@ class CommonUtils(object):
             return '.png'
 
     @staticmethod
-    def fix_out_path(input_path, output_path):
+    def fix_out_path(input_path, output_path, encode=True):
         """
         the default folder is set to `#__[<input_name>]__#`.
         """
         input_path = os.path.abspath(input_path)
         if output_path is None:
-            name = os.path.splitext(os.path.split(input_path)[1])[0]
-            out_path = os.path.join(os.path.dirname(input_path), '#__[' + name + ']__#')
+            name = os.path.split(input_path)[1]
+            if encode:
+                out_path = os.path.join(os.path.dirname(input_path), '#__(' + name + ')__#')
+            else:
+                out_path = os.path.join(os.path.dirname(input_path), '#__[' + name + ']__#')
             os.makedirs(out_path, exist_ok=True)
         else:
             out_path = os.path.abspath(output_path)
@@ -56,6 +59,8 @@ class CommonUtils(object):
 class DecoderUtil(CommonUtils):
     def __init__(self, ops):
         super().__init__(ops)
+        self.input = ops.input
+        self.output = self.fix_out_path(self.input, ops.output, encode=False)
 
     @staticmethod
     def byte_to_index(index_array):
@@ -125,14 +130,14 @@ class EncoderUtil(CommonUtils):
 
     @staticmethod
     def byte_array_to_string(b):
-        return base64.b64encode(zlib.compress(bytes(b)))
+        return base64.b64encode(zlib.compress(bytes(b), 9))
 
     def create_chunks(self):
         with open(self.input, 'rb') as f:
             byte_array = f.read()
         # add file name here
         byte_array = self.path_to_bytes(self.input) + byte_array
-        byte_array = zlib.compress(byte_array)
+        byte_array = zlib.compress(byte_array, 9)
         i = 0
         file_counter = 0
         bucket = [0 for _ in range(self.idx_byte * 2)]
@@ -165,8 +170,6 @@ class QR2File(DecoderUtil):
 
     def __init__(self, ops):
         super().__init__(ops)
-        self.input = ops.input
-        self.output = self.fix_out_path(self.input, ops.output)
         self.cpu_number = self.cpu_count(ops.cpu_number)
         self.black_white = ops.black_white
 
@@ -279,8 +282,6 @@ class File2QR(EncoderUtil):
 
     def __init__(self, ops):
         super().__init__(ops)
-        self.input = ops.input
-        self.output = ops.output
         self.chunk_size = ops.chunk_size
         self.quality = ops.quality
         self.cpu_number = self.cpu_count(ops.cpu_number)
