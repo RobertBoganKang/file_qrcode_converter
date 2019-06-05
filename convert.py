@@ -93,7 +93,7 @@ class DecoderUtil(CommonUtils):
     @staticmethod
     def bytes_to_file_name(b):
         d = [x for x in b if x != 0]
-        return bytes(d).decode()
+        return bytes(d).decode('utf-8')
 
 
 class EncoderUtil(CommonUtils):
@@ -123,7 +123,7 @@ class EncoderUtil(CommonUtils):
     @staticmethod
     def path_to_bytes(path):
         path = os.path.split(path)[1]
-        b = path.encode()
+        b = path.encode('utf-8')
         for _ in range(256 - len(b)):
             b += b'\x00'
         return b
@@ -406,14 +406,20 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if os.path.exists(args.input) and os.path.isfile(args.input):
-        print(f'now encoding from [{args.input}] to [{args.output}] ~')
+        if args.output is None:
+            print(f'now encoding [{args.input}] ~')
+        else:
+            print(f'now encoding from [{args.input}] to [{args.output}] ~')
         print('-' * 50)
         f2qr = File2QR(args)
         f2qr.export_qr_code()
         if not args.black_white:
             f2qr.replace_with_merged_image()
     elif os.path.exists(args.input) and os.path.isdir(args.input):
-        print(f'now decoding from [{args.input}] to [{args.output}] ~')
+        if args.output is None:
+            print(f'now decoding [{args.input}] ~')
+        else:
+            print(f'now decoding from [{args.input}] to [{args.output}] ~')
         print('-' * 50)
         qr2f = QR2File(args)
         if not args.black_white:
