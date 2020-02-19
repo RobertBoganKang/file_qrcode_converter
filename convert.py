@@ -22,15 +22,20 @@ class CommonUtils(object):
         self.out_format = self.determine_format()
 
     @staticmethod
-    def cpu_count(cpu_count):
+    def cpu_count(cpu):
         """
         get the cpu number
         :return: int; valid cpu number
         """
         max_cpu = multiprocessing.cpu_count()
-        if cpu_count == 0 or cpu_count > max_cpu:
-            cpu_count = max_cpu
-        return cpu_count
+        if 0 < cpu <= max_cpu:
+            return cpu
+        elif cpu == 0 or cpu > max_cpu:
+            return max_cpu
+        elif 1 - max_cpu < cpu < 0:
+            return max_cpu + cpu
+        else:
+            return 1
 
     def determine_format(self):
         if self.color_space.lower() != 'rgb':
@@ -196,8 +201,8 @@ class QR2File(DecoderUtil):
             fs.append(os.path.join(self.input, name))
         if len(fs) == 0:
             raise FileNotFoundError('no image found!')
-        pool = multiprocessing.Pool(self.cpu_number)
-        pool.map(self.separate_image, fs)
+        with multiprocessing.Pool(self.cpu_number) as pool:
+            pool.map(self.separate_image, fs)
 
     # decode data
     @staticmethod
@@ -236,22 +241,23 @@ class QR2File(DecoderUtil):
 
     def extract_data_from_qr(self):
         """ main function for extraction"""
+        # noinspection PyGlobalUndefined
         global max_chunk
         max_chunk = multiprocessing.Value('i')
-        pool = multiprocessing.Pool(self.cpu_number)
-        names = []
-        names_ = os.listdir(self.input)
-        # select and clean all other files
-        if self.black_white:
-            for x in names_:
-                if x.startswith('#_') or '.' not in x:
-                    path = os.path.join(self.input, x)
-                    os.remove(path)
-                elif '.' in x:
-                    names.append(x)
-        else:
-            names = [x for x in names_ if x.startswith('#_')]
-        pool.map(self.extract_helper, names)
+        with multiprocessing.Pool(self.cpu_number) as pool:
+            names = []
+            names_ = os.listdir(self.input)
+            # select and clean all other files
+            if self.black_white:
+                for x in names_:
+                    if x.startswith('#_') or '.' not in x:
+                        path = os.path.join(self.input, x)
+                        os.remove(path)
+                    elif '.' in x:
+                        names.append(x)
+            else:
+                names = [x for x in names_ if x.startswith('#_')]
+            pool.map(self.extract_helper, names)
 
         data_rebuild = b''
         for i in range(max_chunk.value):
@@ -334,8 +340,8 @@ class File2QR(EncoderUtil):
     def export_qr_code(self):
         chunks_raw = self.create_chunks()
         chunks_raw = [(i, x) for i, x in enumerate(chunks_raw)]
-        pool = multiprocessing.Pool(self.cpu_number)
-        pool.map(self.export_qr_code_helper, chunks_raw)
+        with multiprocessing.Pool(self.cpu_number) as pool:
+            pool.map(self.export_qr_code_helper, chunks_raw)
 
     # combine image into image channels
     def merge_image(self, f):
@@ -374,8 +380,8 @@ class File2QR(EncoderUtil):
                 img_array = [os.path.join(self.output, 't' + str(x) + '.png') for x in
                              range(i * self.color_dim, (i + 1) * self.color_dim)]
                 fs.append((img_array, out_path))
-        pool = multiprocessing.Pool(self.cpu_number)
-        pool.map(self.merge_image, fs)
+        with multiprocessing.Pool(self.cpu_number) as pool:
+            pool.map(self.merge_image, fs)
 
         # change name of last few images
         if length * self.color_dim < len(names):
