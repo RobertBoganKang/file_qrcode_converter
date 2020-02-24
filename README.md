@@ -20,7 +20,7 @@ The system library of `libzbar` is also needed (Ubuntu: `apt-get install libzbar
 * `--chunk_size`: the number of byte for each data to store for each qr-code (manipulate this number as long as the program will not break).
 * `--cpu_number`: the number of CPU to process files.
 * `--quality`: error allowance, L, M, Q, H from low to high.
-* `--black_white`: the black and white regular qr-code if have, otherwise the RGB color mode.
+* `--black_white`: the black and white regular qr-code if have, otherwise the `RGB` color mode.
 * `--index_byte`: the number of byte for indexes encoding, default is 2 (danger!! user may not know this number).
 ## Demo
 Type `python convert.py -i demo -o mozart_11.mid`, it decodes one or multiple qr-code images from the folder `demo` to the `mid` music file -- `mozart_11.mid` is the *Mozart Piano Sonata No.11 (first part)* I played.
@@ -28,7 +28,12 @@ Type `python convert.py -i demo -o mozart_11.mid`, it decodes one or multiple qr
 Of course, the script `python convert.py -o demo -i mozart_11.mid` is the reverse way of encoding back from the file to multiple qr-code images.
 
 Since the file name are also stored in the qr-code, for the decoding part, if the output is the folder, the program will restore the file within this folder. Namely, type `python convert.py -i demo -o <folder>`, the `mozart_11.mid` file will appear within `<folder>`. If output is not defined, a new folder with name pattern `#__[<name>]__#` will appear at the same level of the input path.
+## Addition
+
+Same method was applied on the image as carrier if screen-shot operation is available.
+
 ## Disclaimer
+
 This project can only be used under the law of the state or country from any user.
 
 However, it can be used for research purposes without penalty.
