@@ -26,7 +26,7 @@ class Common(object):
             * `16_bits` stores the index [0, 65535].
             * `2_bits` stores the level [0, 3].
     ----------------------------------------------
-    Description of header info of data
+    Description of header info of data (store file name)
     [256 Bytes store 256 characters] to store file name
     """
 
@@ -103,11 +103,13 @@ class File2Image(Common):
         self.input = ops.input
         self.output = self.fix_out_path(self.input, ops.output)
         self.cpu_number = self.cpu_count(ops.cpu_number)
-        self.check_output_folder()
 
         # initialize with given parameters
         self.initialize_level(level=ops.level)
         self.initialize_image_size(image_size=ops.image_size)
+
+        # fix input path
+        self.check_output_folder()
 
     def ask_for_new_path(self):
         new_path = input('please type new path for exporting data-image:')
@@ -353,8 +355,8 @@ class SingleImage2TempFile(Common):
     def image_path_to_data(self, path):
         """
         read path and extract the effective data
-        @param path:
-        @return:
+        @param path: str
+        @return: None
         """
         # read image
         img = Image.open(path).convert('RGB')
@@ -458,7 +460,7 @@ if __name__ == '__main__':
     parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
 
     # argument for image
-    parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=4)
+    parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=2)
     parser.add_argument('--image_size', '-s', type=int, help='the size of image to encode', nargs='+',
                         default=[1200, 900])
     args = parser.parse_args()

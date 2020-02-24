@@ -7,7 +7,7 @@ Different from **file & QR-code converter**, the image carries much more informa
 | Compare           | QR-Code              | Image         |
 | ----------------- | -------------------- | ------------- |
 | Size [Byte/Image] | no more than `< 6kB` | up to `> 1MB` |
-| Carrier           | camera, screen-shot  | screen-shot   |
+| Carrier           | camera, screenshot   | screenshot    |
 
 ## Requirement
 
@@ -22,6 +22,10 @@ The python library of `pillow` and `pypng`.
 * `--cpu_number`: the number of CPU to process files.
 * `--level`: the quality level of image: 1, 2, 3, 4; larger level number will carry more data.
 * `--image_size`: image size in pixel.
+
+## Warning
+
+Do not use **black background** to take the screenshot!
 
 ## Demo
 
