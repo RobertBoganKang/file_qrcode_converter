@@ -4,10 +4,10 @@
 
 Different from **file & QR-code converter**, the image carries much more information than the QR-code.
 
-| Compare           | QR-Code              | Image         |
-| ----------------- | -------------------- | ------------- |
-| Size [Byte/Image] | no more than `< 6kB` | up to `> 1MB` |
-| Carrier           | camera, screenshot   | screenshot    |
+| Compare           | QR-Code            | Image        |
+| ----------------- | ------------------ | ------------ |
+| Size [Byte/Image] | `< 6kB`            | up to `1MB+` |
+| Carrier           | camera, screenshot | screenshot   |
 
 ## Requirement
 
