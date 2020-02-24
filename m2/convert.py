@@ -468,6 +468,9 @@ if __name__ == '__main__':
     # check output image size
     if max(args.image_size) <= 3:
         raise ValueError('the image size will be larger than 3 pixels for each side')
+    # check level number error
+    if args.level > 4 or args.level < 1:
+        raise ValueError('the level number should be 1, 2, 3 or 4')
     # encoding and decoding
     if os.path.exists(args.input) and os.path.isfile(args.input):
         if args.output is None:
