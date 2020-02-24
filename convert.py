@@ -272,6 +272,7 @@ class QR2File(DecoderUtil):
         # extract file name
         file_name = self.bytes_to_file_name(data_rebuild[:256])
         data_rebuild = data_rebuild[256:]
+        # fix output folder
         if os.path.isdir(self.output):
             self.output = os.path.join(self.output, file_name)
         else:
@@ -395,7 +396,7 @@ class File2QR(EncoderUtil):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='convert file to qr code')
+    parser = argparse.ArgumentParser(description='convert file to qr code; for camera')
     # argument for project
     parser.add_argument('--input', '-i', type=str, help='the source', default='demo')
     parser.add_argument('--output', '-o', type=str, help='the target', default=None)
