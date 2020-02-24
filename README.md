@@ -14,7 +14,7 @@ The python library of `pillow`, `pyqrcode`, `pypng`, `zbar` and `pyzbar` are req
 The system library of `libzbar` is also needed (Ubuntu: `apt-get install libzbar-dev`).
 
 ## Usage
-### common
+### Argument
 * `--input`: the input file of converting to qr-code, or folders of images to decode.
 * `--output`: the output folder for qr-code, or target file to export from qr-code.
 * `--chunk_size`: the number of byte for each data to store for each qr-code (manipulate this number as long as the program will not break).
@@ -28,9 +28,9 @@ Type `python convert.py -i demo -o mozart_11.mid`, it decodes one or multiple qr
 Of course, the script `python convert.py -o demo -i mozart_11.mid` is the reverse way of encoding back from the file to multiple qr-code images.
 
 Since the file name are also stored in the qr-code, for the decoding part, if the output is the folder, the program will restore the file within this folder. Namely, type `python convert.py -i demo -o <folder>`, the `mozart_11.mid` file will appear within `<folder>`. If output is not defined, a new folder with name pattern `#__[<name>]__#` will appear at the same level of the input path.
-## Addition
+## Method 2
 
-Same method was applied on the image as carrier if screen-shot operation is available.
+Same method was applied on the image as carrier if screen-shot operation is available. The source file is in `./m2`.
 
 ## Disclaimer
 

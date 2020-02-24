@@ -98,7 +98,7 @@ class Common(object):
 class File2Image(Common):
     """ encoder """
 
-    def __init__(self, ops, level=2, image_size=(1200, 800)):
+    def __init__(self, ops):
         super().__init__()
         self.input = ops.input
         self.output = self.fix_out_path(self.input, ops.output)
@@ -106,8 +106,8 @@ class File2Image(Common):
         self.check_output_folder()
 
         # initialize with given parameters
-        self.initialize_level(level=level)
-        self.initialize_image_size(image_size=image_size)
+        self.initialize_level(level=ops.level)
+        self.initialize_image_size(image_size=ops.image_size)
 
     def ask_for_new_path(self):
         new_path = input('please type new path for exporting data-image:')
@@ -463,6 +463,10 @@ if __name__ == '__main__':
                         default=[1200, 900])
     args = parser.parse_args()
 
+    # check output image size
+    if max(args.image_size) <= 3:
+        raise ValueError('the image size will be larger than 3 pixels for each side')
+    # encoding and decoding
     if os.path.exists(args.input) and os.path.isfile(args.input):
         if args.output is None:
             print(f'now encoding [{args.input}] ~')
