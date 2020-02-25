@@ -367,8 +367,8 @@ class SingleImage2TempFile(Common):
         # find upper-left corner
         index = self.zig_zag_traversal_find_upper_left_corner(img, [0, 0, 0], 8)
         if index is not None:
-            # set 64 as tolerance to find edges
-            cropped_image = self.find_bottom_right_corner_crop_image(img, [0, 0, 0], index, 64)
+            # set 32 as tolerance to find edges
+            cropped_image = self.find_bottom_right_corner_crop_image(img, [0, 0, 0], index, 32)
             return cropped_image.flatten()
         else:
             raise ValueError(f'[{path}] cannot be decoded!')
