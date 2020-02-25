@@ -283,7 +283,7 @@ class SingleImage2TempFile(Common):
         return self.from_base(array[:16], 2), self.from_base(array[16:18], 2) + 1
 
     @staticmethod
-    def zig_zag_traversal_find_upper_left_corner(matrix, identifier):
+    def zig_zag_traversal_find_upper_left_corner(matrix, identifier, tolerance):
         """
         [https://www.geeksforgeeks.org/print-matrix-zag-zag-fashion/]
         zig-zag traversal to find identifier for the first time
@@ -298,6 +298,7 @@ class SingleImage2TempFile(Common):
             to find the upper-left corner pixel (find target `X`)
         @param matrix: numpy 2D array of integer
         @param identifier: list(list(int))
+        @param tolerance: the tolerance of pixels to consider as target
         @return: None or list(int); none or index
         """
         identifier = np.array(identifier)
@@ -308,7 +309,7 @@ class SingleImage2TempFile(Common):
             for j in range(columns):
                 total = i + j
                 # find result
-                if matrix[i, j].any() == identifier.any():
+                if np.max(np.abs(matrix[i, j] - identifier)) < tolerance:
                     return i, j
                 if total % 2 == 0:
                     # add at beginning
@@ -319,7 +320,7 @@ class SingleImage2TempFile(Common):
         return None
 
     @staticmethod
-    def find_bottom_right_corner_crop_image(test_matrix, matrix, idx):
+    def find_bottom_right_corner_crop_image(matrix, target, idx, tolerance):
         """
         find the bottom-right pixel index from upper-left pixel index \
             and crop the image.
@@ -333,20 +334,21 @@ class SingleImage2TempFile(Common):
         namely: from upper-left corner pixel \
             goes right from `>` edge first \
             and goes down from `V` edge to find target `X`
-        @param test_matrix: saturated image matrix: to determine frame
         @param matrix: image matrix
+        @param target: the target pixel color to follow as frame
         @param idx: upper-left corner coordinate index
+        @param tolerance: the tolerance of pixels to consider as target
         @return: matrix of cropped image
         """
         i, j = idx
         # find to the right
-        while i < len(test_matrix) - 1:
-            if test_matrix[i + 1, j].any() == test_matrix[i, j].any():
+        while i < len(matrix) - 1:
+            if np.max(np.abs(matrix[i + 1, j] - target)) < tolerance:
                 i += 1
             else:
                 break
-        while j < len(test_matrix[0]) - 1:
-            if test_matrix[i, j + 1].any() == test_matrix[i, j].any():
+        while j < len(matrix[0]) - 1:
+            if np.max(np.abs(matrix[i, j + 1] - target)) < tolerance:
                 j += 1
             else:
                 break
@@ -361,12 +363,12 @@ class SingleImage2TempFile(Common):
         # read image
         img = Image.open(path).convert('RGB')
         img = np.array(img)
-        # set 8 tolerance to determine black frame
-        img_test = np.round(img / 8).astype(np.int)
+        # set 64 tolerance to find corner of black frame
         # find upper-left corner
-        index = self.zig_zag_traversal_find_upper_left_corner(img_test, [0, 0, 0])
+        index = self.zig_zag_traversal_find_upper_left_corner(img, [0, 0, 0], 8)
         if index is not None:
-            cropped_image = self.find_bottom_right_corner_crop_image(img_test, img, index)
+            # set 64 as tolerance to find edges
+            cropped_image = self.find_bottom_right_corner_crop_image(img, [0, 0, 0], index, 64)
             return cropped_image.flatten()
         else:
             raise ValueError(f'[{path}] cannot be decoded!')
