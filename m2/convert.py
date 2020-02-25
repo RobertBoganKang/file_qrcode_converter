@@ -27,7 +27,7 @@ class Common(object):
             * `2_bits` stores the level [0, 3].
     ----------------------------------------------
     Description of header info of data (store file name)
-    [256 Bytes store 256 characters] to store file name
+        [256 Bytes store 256 characters] to store file name
     """
 
     def __init__(self):
