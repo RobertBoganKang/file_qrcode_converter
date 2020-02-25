@@ -20,13 +20,14 @@ class Common(object):
     Description of `image_size`:
         the decoded image size is `image_size`
     ----------------------------------------------
-    Description of `header`, given image as an example:
+    Description of `header` in image pixels,
+        given image as an example:
         * 6 pixels store the information of `index`
             and `level` for encoding and decoding process.
             * `16_bits` stores the index [0, 65535].
             * `2_bits` stores the level [0, 3].
     ----------------------------------------------
-    Description of header info of data (store file name)
+    Description of header info of data (store file name):
         [256 Bytes store 256 characters] to store file name
     """
 
@@ -363,7 +364,7 @@ class SingleImage2TempFile(Common):
         # read image
         img = Image.open(path).convert('RGB')
         img = np.array(img)
-        # set 64 tolerance to find corner of black frame
+        # set 8 tolerance to find corner of black frame
         # find upper-left corner
         index = self.zig_zag_traversal_find_upper_left_corner(img, [0, 0, 0], 8)
         if index is not None:
@@ -464,7 +465,7 @@ if __name__ == '__main__':
     # argument for image
     parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=2)
     parser.add_argument('--image_size', '-s', type=int, help='the size of image to encode', nargs='+',
-                        default=[1200, 900])
+                        default=[800, 600])
     args = parser.parse_args()
 
     # check output image size
