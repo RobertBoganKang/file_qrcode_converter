@@ -31,8 +31,6 @@ Do not use **black background** to take the screenshot!
 
 Same as File & QR-Code Converter.
 
-...
-
 ## Disclaimer
 
 ...
