@@ -344,15 +344,19 @@ class SingleImage2TempFile(Common):
         i, j = idx
         # find to the right
         while i < len(matrix) - 1:
-            if np.max(np.abs(matrix[i + 1, j] - target)) < tolerance:
+            if np.mean(np.abs(matrix[i + 1, j] - target)) < tolerance:
                 i += 1
             else:
-                break
+                # check corner
+                if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
+                    break
         while j < len(matrix[0]) - 1:
-            if np.max(np.abs(matrix[i, j + 1] - target)) < tolerance:
+            if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
                 j += 1
             else:
-                break
+                # check corner
+                if np.mean(np.abs(matrix[i - 1, j] - target)) < tolerance:
+                    break
         return matrix[idx[0] + 1:i, idx[1] + 1:j]
 
     def image_path_to_data(self, path):
