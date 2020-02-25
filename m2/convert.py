@@ -212,6 +212,45 @@ class File2Image(Common):
                                + [255 for _ in range(self.last_empty_data_carry)])
         self.export_image_helper(image_array, i, out_folder)
 
+    @staticmethod
+    def rbk_background(s1, s2):
+        """
+        generate `rbk` background
+        @param s1: int; image size 0
+        @param s2: int; image size 1
+        @return: numpy array of image
+        """
+        rbk = 'rrr..bbb..k..k.,' \
+              'r..r.b..b.k.k..,' \
+              'rrr..bbb..kk...,' \
+              'r.r..b..b.k.k..,' \
+              'r..r.bbb..k..k.,' \
+              '...............'
+        rbk = rbk.split(',')
+        r_color = [255, 0, 0]
+        b_color = [0, 0, 255]
+        k_color = [127, 127, 127]
+        dot_color = [255, 255, 255]
+        rbk_size = [len(rbk), len(rbk[0])]
+        table = []
+        for i in range(s2):
+            row = []
+            for j in range(s1):
+                i_idx = i % rbk_size[0]
+                row_number = i // rbk_size[0]
+                j_idx = (j - 8 * row_number) % rbk_size[1]
+                if rbk[i_idx][j_idx] == 'r':
+                    row.append(r_color)
+                elif rbk[i_idx][j_idx] == 'b':
+                    row.append(b_color)
+                elif rbk[i_idx][j_idx] == 'k':
+                    row.append(k_color)
+                else:
+                    row.append(dot_color)
+            table.append(row)
+        table = np.array(table).flatten()
+        return table
+
     def encode_image(self, array_list, out_folder):
         """
         split image
@@ -231,12 +270,21 @@ class File2Image(Common):
         last_array_list = array_list[i_length * self.image_data_carry:]
         # encode image for rest of data
         if len(last_array_list) != 0:
+            rbk_array = self.rbk_background(self.image_size[0], self.image_size[1])
+            gap_size = 3 - (len(last_array_list) % 3)
             image_array = np.array(
                 self.encode_header(i_length)
                 + [self.data_to_pixel(ii) for ii in last_array_list]
                 # final empty data was all white pixels
                 # compress algorithm will not consider data at the end
-                + [255 for _ in range(self.image_data_carry - len(last_array_list) + self.last_empty_data_carry)]
+                # TODO get rbk background
+                + [255 for _ in range(gap_size)]
+                + [rbk_array[i] for i in
+                   range(self.image_size[0] * self.image_size[1]
+                         - (self.image_data_carry - len(last_array_list) + self.last_empty_data_carry - gap_size),
+                         self.image_size[0] * self.image_size[1]
+                         )
+                   ]
             )
             self.export_image_helper(image_array, i_length, out_folder)
 
