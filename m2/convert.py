@@ -223,13 +223,13 @@ class File2Image(Common):
         rbk = 'rrr..bbb..k..k.,' \
               'r..r.b..b.k.k..,' \
               'rrr..bbb..kk...,' \
-              'r.r..b..b.k.k..,' \
+              'r..r.b..b.k.k..,' \
               'r..r.bbb..k..k.,' \
               '...............'
         rbk = rbk.split(',')
         r_color = [255, 0, 0]
         b_color = [0, 0, 255]
-        k_color = [127, 127, 127]
+        k_color = [64, 64, 64]
         dot_color = [255, 255, 255]
         rbk_size = [len(rbk), len(rbk[0])]
         table = []
