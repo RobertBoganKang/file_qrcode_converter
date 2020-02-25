@@ -309,8 +309,14 @@ class SingleImage2TempFile(Common):
         for i in range(rows):
             for j in range(columns):
                 total = i + j
-                # find result
-                if np.max(np.abs(matrix[i, j] - identifier)) < tolerance:
+                # find result, check corner
+                # noinspection PyChainedComparisons
+                if (
+                        np.mean(np.abs(matrix[i, j] - identifier)) < tolerance and
+                        np.mean(np.abs(matrix[i + 1, j] - identifier)) < tolerance and
+                        np.mean(np.abs(matrix[i, j + 1] - identifier)) < tolerance and
+                        np.mean(np.abs(matrix[i + 1, j + 1] - identifier)) > tolerance
+                ):
                     return i, j
                 if total % 2 == 0:
                     # add at beginning
@@ -368,9 +374,9 @@ class SingleImage2TempFile(Common):
         # read image
         img = Image.open(path).convert('RGB')
         img = np.array(img)
-        # set 8 tolerance to find corner of black frame
+        # set 16 tolerance to find corner of black frame
         # find upper-left corner
-        index = self.zig_zag_traversal_find_upper_left_corner(img, [0, 0, 0], 8)
+        index = self.zig_zag_traversal_find_upper_left_corner(img, [0, 0, 0], 16)
         if index is not None:
             # set 32 as tolerance to find edges
             cropped_image = self.find_bottom_right_corner_crop_image(img, [0, 0, 0], index, 32)
