@@ -30,7 +30,7 @@ Of course, the script `python convert.py -o demo -i mozart_11.mid` is the revers
 Since the file name are also stored in the qr-code, for the decoding part, if the output is the folder, the program will restore the file within this folder. Namely, type `python convert.py -i demo -o <folder>`, the `mozart_11.mid` file will appear within `<folder>`. If output is not defined, a new folder with name pattern `#__[<name>]__#` will appear at the same level of the input path.
 ## Method 2
 
-Same method was applied on the image as carrier if screen-shot operation is available. The source file is in `./m2`.
+Same method was applied on the image as carrier if screenshot operation is available. The source file is in `./m2`.
 
 ## Disclaimer
 
