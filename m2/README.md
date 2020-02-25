@@ -29,7 +29,7 @@ Do not use **black background** to take the screenshot!
 
 ## Demo
 
-Same as File & QR-Code Converter.
+Same as **File & QR-Code Converter**.
 
 ## Disclaimer
 
