@@ -223,7 +223,7 @@ class File2Image(Common):
         rbk = 'rrr..bbb..k..k.,' \
               'r..r.b..b.k.k..,' \
               'rrr..bbb..kk...,' \
-              'r..r.b..b.k.k..,' \
+              'r.r..b..b.k.k..,' \
               'r..r.bbb..k..k.,' \
               '...............'
         rbk = rbk.split(',')
