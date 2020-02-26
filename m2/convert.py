@@ -362,10 +362,10 @@ class SingleImage2TempFile(Common):
                 # find result, check corner
                 # noinspection PyChainedComparisons
                 if (
-                        np.mean(np.abs(matrix[i, j] - identifier)) < tolerance and
-                        np.mean(np.abs(matrix[i + 1, j] - identifier)) < tolerance and
-                        np.mean(np.abs(matrix[i, j + 1] - identifier)) < tolerance and
-                        np.mean(np.abs(matrix[i + 1, j + 1] - identifier)) > tolerance
+                        np.mean(np.abs(matrix[i, j] - identifier)) < tolerance
+                        and np.mean(np.abs(matrix[i + 1, j] - identifier)) < tolerance
+                        and np.mean(np.abs(matrix[i, j + 1] - identifier)) < tolerance
+                        # and np.mean(np.abs(matrix[i + 1, j + 1] - identifier)) > tolerance
                 ):
                     return i, j
                 if total % 2 == 0:
