@@ -220,12 +220,12 @@ class File2Image(Common):
         @param s2: int; image size 1
         @return: numpy array of image
         """
-        rbk = 'rrr..bbb..k..k.,' \
-              'r..r.b..b.k.k..,' \
-              'rrr..bbb..kk...,' \
-              'r.r..b..b.k.k..,' \
-              'r..r.bbb..k..k.,' \
-              '...............,'
+        rbk = 'rrr..bbb..k..k.....b...k...,' \
+              'r..r.b..b.k.k..r.r.bb..k.k.,' \
+              'rrr..bbb..kk...rr..b.b.kk..,' \
+              'r.r..b..b.k.k..r...b.b.k.k.,' \
+              'r..r.bbb..k..k.r...bb..k.k.,' \
+              '...........................'
 
         rbk = rbk.split(',')
         r_color = [255, 0, 0]
@@ -239,7 +239,7 @@ class File2Image(Common):
             for j in range(s1):
                 i_idx = i % rbk_size[0]
                 row_number = i // rbk_size[0]
-                j_idx = (j - 8 * row_number) % rbk_size[1]
+                j_idx = (j - 10 * row_number) % rbk_size[1]
                 if rbk[i_idx][j_idx] == 'r':
                     row.append(r_color)
                 elif rbk[i_idx][j_idx] == 'b':
@@ -272,19 +272,16 @@ class File2Image(Common):
         # encode image for rest of data
         if len(last_array_list) != 0:
             rbk_array = self.rbk_background(self.image_size[0], self.image_size[1])
-            gap_size = 3 - (len(last_array_list) % 3)
             image_array = np.array(
                 self.encode_header(i_length)
                 + [self.data_to_pixel(ii) for ii in last_array_list]
                 # final empty data was all white pixels
                 # compress algorithm will not consider data at the end
-                # add gap for pixel adjust
-                + [255 for _ in range(gap_size)]
                 # add rbk background
                 + [rbk_array[i] for i in
-                   range(self.image_size[0] * self.image_size[1]
-                         - (self.image_data_carry - len(last_array_list) + self.last_empty_data_carry - gap_size),
-                         self.image_size[0] * self.image_size[1]
+                   range(self.image_size[0] * self.image_size[1] * 3
+                         - (self.image_data_carry - len(last_array_list) + self.last_empty_data_carry),
+                         self.image_size[0] * self.image_size[1] * 3
                          )
                    ]
             )
