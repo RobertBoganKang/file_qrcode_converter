@@ -220,12 +220,12 @@ class File2Image(Common):
         @param s2: int; image size 1
         @return: numpy array of image
         """
-        rbk = '...............,' \
-              '.rrr..bbb..k..k,' \
-              '.r..r.b..b.k.k.,' \
-              '.rrr..bbb..kk..,' \
-              '.r.r..b..b.k.k.,' \
-              '.r..r.bbb..k..k'
+        rbk = 'rrr..bbb..k..k.,' \
+              'r..r.b..b.k.k..,' \
+              'rrr..bbb..kk...,' \
+              'r.r..b..b.k.k..,' \
+              'r..r.bbb..k..k.,' \
+              '...............,'
 
         rbk = rbk.split(',')
         r_color = [255, 0, 0]
@@ -531,6 +531,7 @@ if __name__ == '__main__':
     # fix output image size
     # if one number ==> square image
     if len(args.image_size) == 1:
+        # noinspection PyUnresolvedReferences
         args.image_size = [args.image_size[0], args.image_size[0]]
     # check output image size
     if max(args.image_size) <= 3:
