@@ -220,12 +220,13 @@ class File2Image(Common):
         @param s2: int; image size 1
         @return: numpy array of image
         """
-        rbk = 'rrr..bbb..k..k.,' \
-              'r..r.b..b.k.k..,' \
-              'rrr..bbb..kk...,' \
-              'r.r..b..b.k.k..,' \
-              'r..r.bbb..k..k.,' \
-              '...............'
+        rbk = '...............,' \
+              '.rrr..bbb..k..k,' \
+              '.r..r.b..b.k.k.,' \
+              '.rrr..bbb..kk..,' \
+              '.r.r..b..b.k.k.,' \
+              '.r..r.bbb..k..k'
+
         rbk = rbk.split(',')
         r_color = [255, 0, 0]
         b_color = [0, 0, 255]
@@ -277,8 +278,9 @@ class File2Image(Common):
                 + [self.data_to_pixel(ii) for ii in last_array_list]
                 # final empty data was all white pixels
                 # compress algorithm will not consider data at the end
-                # TODO get rbk background
+                # add gap for pixel adjust
                 + [255 for _ in range(gap_size)]
+                # add rbk background
                 + [rbk_array[i] for i in
                    range(self.image_size[0] * self.image_size[1]
                          - (self.image_data_carry - len(last_array_list) + self.last_empty_data_carry - gap_size),
@@ -526,12 +528,17 @@ if __name__ == '__main__':
                         default=[800, 600])
     args = parser.parse_args()
 
+    # fix output image size
+    # if one number ==> square image
+    if len(args.image_size) == 1:
+        args.image_size = [args.image_size[0], args.image_size[0]]
     # check output image size
     if max(args.image_size) <= 3:
         raise ValueError('the image size will be larger than 3 pixels for each side')
     # check level number error
     if args.level > 4 or args.level < 1:
         raise ValueError('the level number should be 1, 2, 3 or 4')
+
     # encoding and decoding
     if os.path.exists(args.input) and os.path.isfile(args.input):
         if args.output is None:
