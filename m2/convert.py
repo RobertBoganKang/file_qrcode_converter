@@ -215,11 +215,12 @@ class File2Image(Common):
     @staticmethod
     def rbk_background(s1, s2):
         """
-        generate `rbk` background
+        generate `rbk` background with given image size
         @param s1: int; image size 0
         @param s2: int; image size 1
         @return: numpy array of image
         """
+        # rbk one image pattern
         rbk = 'rrr..bbb..k..k.....b...k...,' \
               'r..r.b..b.k.k..r.r.bb..k.k.,' \
               'rrr..bbb..kk...rr..b.b.kk..,' \
@@ -232,7 +233,7 @@ class File2Image(Common):
         b_color = [0, 0, 255]
         k_color = [64, 64, 64]
         dot_color = [255, 255, 255]
-        rbk_size = [len(rbk), len(rbk[0])]
+        rbk_size = (len(rbk), len(rbk[0]))
         table = []
         for i in range(s2):
             row = []
@@ -249,7 +250,7 @@ class File2Image(Common):
                 else:
                     row.append(dot_color)
             table.append(row)
-        table = np.array(table).flatten()
+        table = np.array(table)
         return table
 
     def encode_image(self, array_list, out_folder):
@@ -271,12 +272,13 @@ class File2Image(Common):
         last_array_list = array_list[i_length * self.image_data_carry:]
         # encode image for rest of data
         if len(last_array_list) != 0:
-            rbk_array = self.rbk_background(self.image_size[0], self.image_size[1])
+            # flatten the multi-dimensional table to array
+            rbk_array = self.rbk_background(self.image_size[0], self.image_size[1]).flatten()
             image_array = np.array(
                 self.encode_header(i_length)
                 + [self.data_to_pixel(ii) for ii in last_array_list]
-                # final empty data was all white pixels
                 # compress algorithm will not consider data at the end
+                # final empty data with interesting background
                 # add rbk background
                 + [rbk_array[i] for i in
                    range(self.image_size[0] * self.image_size[1] * 3
@@ -336,11 +338,11 @@ class SingleImage2TempFile(Common):
         [https://www.geeksforgeeks.org/print-matrix-zag-zag-fashion/]
         zig-zag traversal to find identifier for the first time
         -------------------------------------------------------------
-        o///.............
-        //X---------+....
-        /.|ooooooooo|....
-        ..+---------+....
-        .................
+        | o///............ |     | o156............ |
+        | //X---------+... |     | 24X---------+... |
+        | /.|ooooooooo|... | --> | 3.|ooooooooo|... |
+        | ..+---------+... |     | ..+---------+... |
+        | ................ |     | ................ |
         -------------------------------------------------------------
         namely: from `o`, use zig-zag traversal
             to find the upper-left corner pixel (find target `X`)
@@ -379,13 +381,13 @@ class SingleImage2TempFile(Common):
         find the bottom-right pixel index from upper-left pixel index \
             and crop the image.
         -------------------------------------------------------------
-        .................
-        ..o>>>>>>>>>*....
-        ..|oooooooooV....
-        ..+---------X....
-        .................
+        | ................ |
+        | ..o>>>>>>>>>*... |
+        | ..|oooooooooV... |
+        | ..+---------X... |
+        | ................ |
         -------------------------------------------------------------
-        namely: from upper-left corner pixel \
+        namely: from upper-left corner pixel `o` \
             goes right from `>` edge first \
             and goes down from `V` edge to find target `X`
         @param matrix: image matrix
