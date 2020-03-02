@@ -104,6 +104,7 @@ class File2Image(Common):
         self.input = ops.input
         self.output = self.fix_out_path(self.input, ops.output)
         self.cpu_number = self.cpu_count(ops.cpu_number)
+        self.compress = ops.compress
 
         # initialize with given parameters
         self.initialize_level(level=ops.level)
@@ -295,7 +296,7 @@ class File2Image(Common):
             # add file name
             name_bytes = self.path_to_bytes(self.input)
             # compress
-            b_compress = zlib.compress(name_bytes + bytes(b_arr), 9)
+            b_compress = zlib.compress(name_bytes + bytes(b_arr), self.compress)
             compressed_byte_list = list(b_compress)
             encoded_data = self.split_array(compressed_byte_list)
             os.makedirs(self.output, exist_ok=True)
@@ -523,11 +524,16 @@ if __name__ == '__main__':
 
     # argument for image
     parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=2)
+    parser.add_argument('--compress', '-z', type=int, help='the encoding compression level: 0 ~ 9 or -1 as default',
+                        default=1)
     parser.add_argument('--image_size', '-s', type=int, help='the size of image to encode', nargs='+',
                         default=[800, 600])
     args = parser.parse_args()
 
     # fix output image size
+    # check compression level
+    if args.compress > 9 or args.compress < -1:
+        raise ValueError('the compression level should in the range of -1 ~ 9')
     # if one number ==> square image
     if len(args.image_size) == 1:
         # noinspection PyUnresolvedReferences

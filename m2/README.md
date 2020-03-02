@@ -21,6 +21,7 @@ The python library of `pillow` and `pypng`.
 * `--output`: the output folder for image, or target file to export from image.
 * `--cpu_number`: the number of CPU to process files.
 * `--level`: the quality level of image: 1, 2, 3, 4; larger level number will carry more data.
+* `--compress`: the encoding compression level: 0 ~ 9 or -1 as default.
 * `--image_size`: image size in pixel; please follow 2 numbers.
 
 ## Warning
