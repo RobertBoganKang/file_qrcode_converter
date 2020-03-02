@@ -41,6 +41,8 @@ class Common(object):
         self.n_gap = None
         self.image_data_carry = None
         self.last_empty_data_carry = None
+        # black frame color defines here
+        self.frame_color = [0, 0, 0]
 
     def initialize_level(self, level=2):
         """ initialize level parameters """
@@ -196,7 +198,7 @@ class File2Image(Common):
         image_reshaped = np.reshape(image_array,
                                     newshape=(self.image_size[1], self.image_size[0], 3))
         # add black frame
-        return self.add_frame(image_reshaped, [0, 0, 0])
+        return self.add_frame(image_reshaped, self.frame_color)
 
     def export_image_helper(self, image_array, i, out_folder):
         image_reshaped = self.array_transform(image_array)
@@ -308,6 +310,7 @@ class SingleImage2TempFile(Common):
 
     def __init__(self):
         super().__init__()
+        self.image_number = None
 
     @staticmethod
     def from_base(integer_array, base):
@@ -333,8 +336,7 @@ class SingleImage2TempFile(Common):
         array = [round(1 - x / 255) for x in array]
         return self.from_base(array[:16], 2), self.from_base(array[16:18], 2) + 1
 
-    @staticmethod
-    def zig_zag_traversal_find_upper_left_corner(matrix, identifier, tolerance):
+    def zig_zag_traversal_find_upper_left_corner(self, matrix, identifier, tolerance):
         """
         [https://www.geeksforgeeks.org/print-matrix-zag-zag-fashion/]
         zig-zag traversal to find identifier for the first time
@@ -356,16 +358,23 @@ class SingleImage2TempFile(Common):
         rows = len(matrix)
         columns = len(matrix[0])
         solution = [[] for _ in range(rows + columns - 1)]
-        for i in range(rows):
-            for j in range(columns):
+        for i in range(rows - 1):
+            for j in range(columns - 1):
+                # test edge pixels
                 total = i + j
+                # get upper left corner pixel, red channel
+                # if `image_number` < power(2, 15), the first red channel is 255, otherwise 0
+                if self.image_number < 2 ** 15:
+                    upper_left_corner_px_test = (255 - matrix[i + 1, j + 1, 0]) < tolerance
+                else:
+                    upper_left_corner_px_test = matrix[i + 1, j + 1, 0] < tolerance
                 # find result, check corner
                 # noinspection PyChainedComparisons
                 if (
                         np.mean(np.abs(matrix[i, j] - identifier)) < tolerance
                         and np.mean(np.abs(matrix[i + 1, j] - identifier)) < tolerance
                         and np.mean(np.abs(matrix[i, j + 1] - identifier)) < tolerance
-                        # and np.mean(np.abs(matrix[i + 1, j + 1] - identifier)) > tolerance
+                        and upper_left_corner_px_test
                 ):
                     return i, j
                 if total % 2 == 0:
@@ -426,10 +435,10 @@ class SingleImage2TempFile(Common):
         img = np.array(img)
         # set 16 tolerance to find corner of black frame
         # find upper-left corner
-        index = self.zig_zag_traversal_find_upper_left_corner(img, [0, 0, 0], 16)
+        index = self.zig_zag_traversal_find_upper_left_corner(img, self.frame_color, 16)
         if index is not None:
             # set 32 as tolerance to find edges
-            cropped_image = self.find_bottom_right_corner_crop_image(img, [0, 0, 0], index, 32)
+            cropped_image = self.find_bottom_right_corner_crop_image(img, self.frame_color, index, 32)
             return cropped_image.flatten()
         else:
             raise ValueError(f'[{path}] cannot be decoded!')
@@ -443,7 +452,8 @@ class SingleImage2TempFile(Common):
         decoded_data = self.combine_array([self.pixel_to_data(x) for x in data[18:]])
         return index, decoded_data
 
-    def decode_to_temp_file(self, path):
+    def decode_to_temp_file(self, params):
+        path, self.image_number = params
         index, decoded_data = self.path_decode_to_temp_data(path)
         # export data file
         out_path = os.path.join(os.path.dirname(path), str(index) + '.tmp')
@@ -460,20 +470,24 @@ class Image2File(object):
         self.output = self.output = Common.fix_out_path(self.input, ops.output, encode=False)
         self.cpu_number = Common.cpu_count(ops.cpu_number)
 
+        self.image_number = None
+
     @staticmethod
     def bytes_to_file_name(b):
         d = [x for x in b if x != 0]
         return bytes(d).decode('utf-8')
 
-    @staticmethod
-    def decode_image_to_temp_file_single(path):
+    def decode_image_to_temp_file_single(self, path):
         # create new object for each image of decoding
         decode = SingleImage2TempFile()
-        decode.decode_to_temp_file(path)
+        decode.decode_to_temp_file([path, self.image_number])
 
     def decode_image_to_temp_file(self):
         image_files = os.listdir(self.input)
         image_files = [os.path.join(self.input, x) for x in image_files if not x.endswith('.tmp')]
+        # get number of images
+        self.image_number = len(image_files)
+        # decode images
         with mp.Pool(self.cpu_number) as pool:
             pool.map(self.decode_image_to_temp_file_single, image_files)
 
