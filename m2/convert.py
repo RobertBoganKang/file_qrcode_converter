@@ -1,5 +1,4 @@
 import argparse
-import multiprocessing
 import multiprocessing as mp
 import os
 import shutil
@@ -70,7 +69,7 @@ class Common(object):
         get the cpu number
         :return: int; valid cpu number
         """
-        max_cpu = multiprocessing.cpu_count()
+        max_cpu = mp.cpu_count()
         if 0 < cpu <= max_cpu:
             return cpu
         elif cpu == 0 or cpu > max_cpu:
