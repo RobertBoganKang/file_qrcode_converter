@@ -484,6 +484,9 @@ class Image2File(object):
     def decode_image_to_temp_file(self):
         image_files = os.listdir(self.input)
         image_files = [os.path.join(self.input, x) for x in image_files if not x.endswith('.tmp')]
+        # if no image found
+        if len(image_files) == 0:
+            raise FileNotFoundError('no image found!')
         # get number of images
         self.image_number = len(image_files)
         # decode images
