@@ -510,8 +510,8 @@ class Image2File(object):
             with open(data_file_path, 'rb') as f:
                 b_data = f.read()
                 data_combine += b_data
-                # remove temp file
-                os.remove(data_file_path)
+            # remove temp file
+            os.remove(data_file_path)
         # uncompress
         print('-' * 50)
         decoded_data = zlib.decompress(bytes(data_combine))
