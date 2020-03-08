@@ -42,12 +42,12 @@ class Common(object):
         self.last_empty_data_carry = None
         # black frame color defines here
         self.frame_color = [0, 0, 0]
-        # image size limit defines here
+        # image size limit defines here (2K screen size)
         self.image_size_limit = [1900, 1000]
 
     def fix_image_parameters(self, array_list):
         """
-        fix image parameters if image size parameters are not given all
+        fix image parameters if image size parameters are not given for one or all
         @param array_list: np.array(int)
         @return: None
         """
@@ -570,8 +570,11 @@ if __name__ == '__main__':
     parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=2)
     parser.add_argument('--compress', '-z', type=int, help='the encoding compression level: 0 ~ 9 or -1 as default',
                         default=1)
-    parser.add_argument('--image_size', '-s', type=int, help='the size of image to encode', nargs='+',
-                        default=[800, 600])
+    parser.add_argument('--image_size', '-s', type=int,
+                        help='the size of image to encode (pixel); '
+                             'if given one image size, the image would be square; '
+                             'if one or all parameter are `<=0`, it will convert into one image '
+                             'but to consider this image size are not given.', nargs='+', default=[800, 600])
     args = parser.parse_args()
 
     # fix output image size
