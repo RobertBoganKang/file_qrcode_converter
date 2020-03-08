@@ -42,6 +42,34 @@ class Common(object):
         self.last_empty_data_carry = None
         # black frame color defines here
         self.frame_color = [0, 0, 0]
+        # image size limit defines here
+        self.image_size_limit = [1900, 1000]
+
+    def fix_image_parameters(self, array_list):
+        """
+        fix image parameters if image size parameters are not given all
+        @param array_list: np.array(int)
+        @return: None
+        """
+        if self.image_size[0] <= 0 or self.image_size[1] <= 0:
+            print('--> trying to convert into one image ~')
+            # set default smallest image size mode
+            if self.image_size[0] <= 0 and self.image_size[1] <= 0:
+                # smallest image size mode
+                self.image_size[0] = self.image_size[1] = int(np.ceil(np.sqrt(len(array_list) / 3 + 6)))
+                if self.image_size[0] > self.image_size_limit[1]:
+                    raise OverflowError(f'image length and width too big (> {self.image_size_limit[1]}px) ~')
+            # fix one image size
+            elif self.image_size[0] <= 0:
+                self.image_size[0] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[1]))
+                if self.image_size[0] > self.image_size_limit[0]:
+                    raise OverflowError(f'image width too big (> {self.image_size_limit[0]}px) ~')
+            elif self.image_size[1] <= 0:
+                self.image_size[1] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[0]))
+                if self.image_size[1] > self.image_size_limit[1]:
+                    raise OverflowError(f'image length too big (> {self.image_size_limit[1]}px) ~')
+            # fix image size parameters
+            self.initialize_image_size(image_size=self.image_size)
 
     def initialize_level(self, level=2):
         """ initialize level parameters """
@@ -262,6 +290,8 @@ class File2Image(Common):
         @param out_folder: str; exported output folder
         @return: None
         """
+        # fix image size
+        self.fix_image_parameters(array_list)
         # full sized image
         i_length = len(array_list) // self.image_data_carry
         # if file too big for index
@@ -513,7 +543,6 @@ class Image2File(object):
             # remove temp file
             os.remove(data_file_path)
         # uncompress
-        print('-' * 50)
         decoded_data = zlib.decompress(bytes(data_combine))
         # get_file and data
         file_name = self.bytes_to_file_name(decoded_data[:256])
@@ -528,7 +557,6 @@ class Image2File(object):
         # export
         with open(self.output, 'wb') as w:
             w.write(decoded_data)
-        print('done ~')
 
 
 if __name__ == '__main__':
@@ -555,7 +583,7 @@ if __name__ == '__main__':
         # noinspection PyUnresolvedReferences
         args.image_size = [args.image_size[0], args.image_size[0]]
     # check output image size
-    if max(args.image_size) <= 3:
+    if 0 < max(args.image_size) <= 3:
         raise ValueError('the image size will be larger than 3 pixels for each side')
     # check level number error
     if args.level > 4 or args.level < 1:
