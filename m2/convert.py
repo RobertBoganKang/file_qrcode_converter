@@ -574,7 +574,7 @@ if __name__ == '__main__':
                         help='the size of image to encode (pixel); '
                              'if given one image size, the image would be square; '
                              'if one or all parameter are `<=0`, it will convert into one image '
-                             'but to consider this image size are not given.', nargs='+', default=[800, 600])
+                             'but to consider this dimension is not given.', nargs='+', default=[800, 600])
     args = parser.parse_args()
 
     # fix output image size
