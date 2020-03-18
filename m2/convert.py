@@ -47,6 +47,7 @@ class Common(object):
         self.golden_ratio = (np.sqrt(5) - 1) / 2
 
     def retype_size(self, array_list):
+        """ try to type new image size """
         while True:
             # noinspection PyBroadException
             try:
@@ -56,6 +57,7 @@ class Common(object):
                     raise ValueError()
                 self.image_size = [int(x) for x in new_size]
             except Exception:
+                print('warning: input not recognized!')
                 continue
             break
         self.fix_image_parameters(array_list)
