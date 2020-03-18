@@ -47,9 +47,17 @@ class Common(object):
         self.golden_ratio = (np.sqrt(5) - 1) / 2
 
     def retype_size(self, array_list):
-        new_size = input('--> please type a new image size: ')
-        new_size = new_size.split()
-        self.image_size = [int(x) for x in new_size]
+        while True:
+            # noinspection PyBroadException
+            try:
+                new_size = input('--> please type a new image size (split with space): ')
+                new_size = new_size.strip().split()
+                if len(new_size) == 0:
+                    raise ValueError()
+                self.image_size = [int(x) for x in new_size]
+            except Exception:
+                continue
+            break
         self.fix_image_parameters(array_list)
 
     def fix_image_parameters(self, array_list):
@@ -67,7 +75,7 @@ class Common(object):
             # noinspection PyUnresolvedReferences
             self.image_size = [self.image_size[0], self.image_size[0]]
         # check output image size
-        if 0 < max(self.image_size) <= 3:
+        if 0 < min(self.image_size) <= 3:
             print('warning: the image size will be larger than 3 pixels for each side!')
             self.retype_size(array_list)
 
