@@ -44,6 +44,13 @@ class Common(object):
         self.frame_color = [0, 0, 0]
         # image size limit defines here (2K screen size)
         self.image_size_limit = [1900, 1000]
+        self.golden_ratio = (np.sqrt(5) - 1) / 2
+
+    def retype_size(self, array_list):
+        new_size = input('--> please type a new image size: ')
+        new_size = new_size.split()
+        self.image_size = [int(x) for x in new_size]
+        self.fix_image_parameters(array_list)
 
     def fix_image_parameters(self, array_list):
         """
@@ -51,24 +58,44 @@ class Common(object):
         @param array_list: np.array(int)
         @return: None
         """
+        # check image size
+        # if image size is None, try to encode as one image first, then encode with default image size
+        if self.image_size is None:
+            self.image_size = [0, 0]
+        # if one number ==> square image
+        if len(self.image_size) == 1:
+            # noinspection PyUnresolvedReferences
+            self.image_size = [self.image_size[0], self.image_size[0]]
+        # check output image size
+        if 0 < max(self.image_size) <= 3:
+            print('warning: the image size will be larger than 3 pixels for each side!')
+            self.retype_size(array_list)
+
         if self.image_size[0] <= 0 or self.image_size[1] <= 0:
+            retype = False
             print('--> trying to convert into one image ~')
             # set default smallest image size mode
             if self.image_size[0] <= 0 and self.image_size[1] <= 0:
-                # smallest image size mode
-                self.image_size[0] = self.image_size[1] = int(np.ceil(np.sqrt(len(array_list) / 3 + 6)))
+                # smallest image size mode, image with golden ratio
+                size = np.sqrt((len(array_list) / 3 + 6) / self.golden_ratio)
+                self.image_size[0] = int(np.ceil(size))
+                self.image_size[1] = int(np.ceil(self.golden_ratio * size))
                 if self.image_size[0] > self.image_size_limit[1]:
-                    raise OverflowError(f'image length and width too big (> {self.image_size_limit[1]}px) ~')
+                    print(f'warning: image width too big (> {self.image_size_limit[1]}px)!')
+                    retype = True
             # fix one image size
             elif self.image_size[0] <= 0:
                 self.image_size[0] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[1]))
                 if self.image_size[0] > self.image_size_limit[0]:
-                    raise OverflowError(f'image width too big (> {self.image_size_limit[0]}px) ~')
+                    print(f'warning: image length too big (> {self.image_size_limit[0]}px)!')
+                    retype = True
             elif self.image_size[1] <= 0:
                 self.image_size[1] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[0]))
                 if self.image_size[1] > self.image_size_limit[1]:
-                    raise OverflowError(f'image length too big (> {self.image_size_limit[1]}px) ~')
-            # fix image size parameters
+                    print(f'warning: image width too big (> {self.image_size_limit[1]}px)!')
+                    retype = True
+            if retype:
+                self.retype_size(array_list)
             self.initialize_image_size(image_size=self.image_size)
 
     def initialize_level(self, level=2):
@@ -137,7 +164,6 @@ class File2Image(Common):
 
         # initialize with given parameters
         self.initialize_level(level=ops.level)
-        self.initialize_image_size(image_size=ops.image_size)
 
         # fix input path
         self.check_output_folder()
@@ -567,27 +593,20 @@ if __name__ == '__main__':
     parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
 
     # argument for image
-    parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=2)
+    parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=1)
     parser.add_argument('--compress', '-z', type=int, help='the encoding compression level: 0 ~ 9 or -1 as default',
                         default=1)
     parser.add_argument('--image_size', '-s', type=int,
                         help='the size of image to encode (pixel); '
                              'if given one image size, the image would be square; '
                              'if one or all parameter are `<=0`, it will convert into one image '
-                             'but to consider this dimension is not given.', nargs='+', default=[800, 600])
+                             'but to consider this image size are not given.', nargs='+', default=None)
     args = parser.parse_args()
 
     # fix output image size
     # check compression level
     if args.compress > 9 or args.compress < -1:
         raise ValueError('the compression level should in the range of -1 ~ 9')
-    # if one number ==> square image
-    if len(args.image_size) == 1:
-        # noinspection PyUnresolvedReferences
-        args.image_size = [args.image_size[0], args.image_size[0]]
-    # check output image size
-    if 0 < max(args.image_size) <= 3:
-        raise ValueError('the image size will be larger than 3 pixels for each side')
     # check level number error
     if args.level > 4 or args.level < 1:
         raise ValueError('the level number should be 1, 2, 3 or 4')
