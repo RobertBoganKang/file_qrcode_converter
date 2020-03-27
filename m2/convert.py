@@ -432,7 +432,7 @@ class SingleImage2TempFile(Common):
                 if self.image_number < 2 ** 15:
                     upper_left_corner_px_test = (255 - matrix[i + 1, j + 1, 0]) < tolerance
                 else:
-                    upper_left_corner_px_test = matrix[i + 1, j + 1, 0] < tolerance
+                    upper_left_corner_px_test = True
                 # find result, check corner
                 # noinspection PyChainedComparisons
                 if (
