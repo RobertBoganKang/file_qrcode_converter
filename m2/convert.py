@@ -68,7 +68,7 @@ class Common(object):
         @param array_list: np.array(int)
         @return: None
         """
-        # check image size
+        # check and fix image size
         # if image size is None, try to encode as one image first, then encode with default image size
         if self.image_size is None:
             self.image_size = [0, 0]
@@ -598,7 +598,7 @@ class Image2File(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='convert file to image code; for screenshot')
     # argument for project
-    parser.add_argument('--input', '-i', type=str, help='the source', default='demo')
+    parser.add_argument('--input', '-i', type=str, help='the source', default=None)
     parser.add_argument('--output', '-o', type=str, help='the target', default=None)
     parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
 
@@ -613,7 +613,6 @@ if __name__ == '__main__':
                              'but to consider this image size are not given.', nargs='+', default=None)
     args = parser.parse_args()
 
-    # fix output image size
     # check compression level
     if args.compress > 9 or args.compress < -1:
         raise ValueError('the compression level should in the range of -1 ~ 9')
@@ -622,7 +621,7 @@ if __name__ == '__main__':
         raise ValueError('the level number should be 1, 2, 3 or 4')
 
     # encoding and decoding
-    if os.path.exists(args.input) and os.path.isfile(args.input):
+    if args.input is not None and os.path.exists(args.input) and os.path.isfile(args.input):
         if args.output is None:
             print(f'now encoding [{args.input}] ~')
         else:
@@ -630,7 +629,7 @@ if __name__ == '__main__':
         print('-' * 50)
         f2img = File2Image(args)
         f2img.encode()
-    elif os.path.exists(args.input) and os.path.isdir(args.input):
+    elif args.input is not None and os.path.exists(args.input) and os.path.isdir(args.input):
         if args.output is None:
             print(f'now decoding [{args.input}] ~')
         else:

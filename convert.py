@@ -398,7 +398,7 @@ class File2QR(EncoderUtil):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='convert file to qr code; for camera')
     # argument for project
-    parser.add_argument('--input', '-i', type=str, help='the source', default='demo')
+    parser.add_argument('--input', '-i', type=str, help='the source', default=None)
     parser.add_argument('--output', '-o', type=str, help='the target', default=None)
     parser.add_argument('--chunk_size', '-s', type=int, help='chunk size to encode', default=2048)
     parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
@@ -412,7 +412,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if os.path.exists(args.input) and os.path.isfile(args.input):
+    # encode or decode
+    if args.input is not None and os.path.exists(args.input) and os.path.isfile(args.input):
         if args.output is None:
             print(f'now encoding [{args.input}] ~')
         else:
@@ -422,7 +423,7 @@ if __name__ == '__main__':
         f2qr.export_qr_code()
         if not args.black_white:
             f2qr.replace_with_merged_image()
-    elif os.path.exists(args.input) and os.path.isdir(args.input):
+    elif args.input is not None and os.path.exists(args.input) and os.path.isdir(args.input):
         if args.output is None:
             print(f'now decoding [{args.input}] ~')
         else:
