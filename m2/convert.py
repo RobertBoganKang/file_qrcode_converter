@@ -94,6 +94,8 @@ class Common(object):
         if 0 < min(self.image_size) <= 3:
             print('warning: the image size will be larger than 3 pixels for each side!')
             self.retype_size(array_list)
+        # initialize image
+        self.initialize_image_size(image_size=self.image_size)
 
         retype = False
         if self.image_size[0] <= 0 or self.image_size[1] <= 0:
@@ -119,7 +121,6 @@ class Common(object):
             retype = self.check_size_limit(1) or retype
         if retype:
             self.retype_size(array_list)
-            self.initialize_image_size(image_size=self.image_size)
 
     def initialize_level(self, level=2):
         """ initialize level parameters """
@@ -184,6 +185,8 @@ class File2Image(Common):
         self.output = self.fix_out_path(self.input, ops.output)
         self.cpu_number = self.cpu_count(ops.cpu_number)
         self.compress = ops.compress
+        # try image size and fix later
+        self.image_size = ops.image_size
 
         # initialize with given parameters
         self.initialize_level(level=ops.level)
