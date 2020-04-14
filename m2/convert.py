@@ -105,7 +105,7 @@ class Common(object):
                 self.image_size[0] = int(np.ceil(size))
                 self.image_size[1] = int(np.ceil(self.golden_ratio * size))
                 if self.image_size[0] > self.image_size_limit[1]:
-                    print(f'warning: square image size too big!')
+                    print(f'warning: failed to convert into one image!')
                     retype = True
             # fix one image size
             elif self.image_size[0] <= 0:
