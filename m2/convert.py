@@ -62,6 +62,20 @@ class Common(object):
             break
         self.fix_image_parameters(array_list)
 
+    def check_size_limit(self, num):
+        if num == 0:
+            pattern = '{-}'
+        else:
+            pattern = '{|}'
+        if self.image_size[num] > self.image_size_limit[num]:
+            print(
+                f'warning: (image size)[{num}] @ {pattern} too big '
+                f'({self.image_size[num]}px > {self.image_size_limit[num]}px)!'
+            )
+            return True
+        else:
+            return False
+
     def fix_image_parameters(self, array_list):
         """
         fix image parameters if image size parameters are not given for one or all
@@ -81,8 +95,8 @@ class Common(object):
             print('warning: the image size will be larger than 3 pixels for each side!')
             self.retype_size(array_list)
 
+        retype = False
         if self.image_size[0] <= 0 or self.image_size[1] <= 0:
-            retype = False
             print('--> trying to convert into one image ~')
             # set default smallest image size mode
             if self.image_size[0] <= 0 and self.image_size[1] <= 0:
@@ -91,21 +105,20 @@ class Common(object):
                 self.image_size[0] = int(np.ceil(size))
                 self.image_size[1] = int(np.ceil(self.golden_ratio * size))
                 if self.image_size[0] > self.image_size_limit[1]:
-                    print(f'warning: image width too big (> {self.image_size_limit[1]}px)!')
+                    print(f'warning: square image size too big!')
                     retype = True
             # fix one image size
             elif self.image_size[0] <= 0:
                 self.image_size[0] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[1]))
-                if self.image_size[0] > self.image_size_limit[0]:
-                    print(f'warning: image length too big (> {self.image_size_limit[0]}px)!')
-                    retype = True
+                retype = self.check_size_limit(0) or retype
             elif self.image_size[1] <= 0:
                 self.image_size[1] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[0]))
-                if self.image_size[1] > self.image_size_limit[1]:
-                    print(f'warning: image width too big (> {self.image_size_limit[1]}px)!')
-                    retype = True
-            if retype:
-                self.retype_size(array_list)
+                retype = self.check_size_limit(1) or retype
+        else:
+            retype = self.check_size_limit(0) or retype
+            retype = self.check_size_limit(1) or retype
+        if retype:
+            self.retype_size(array_list)
             self.initialize_image_size(image_size=self.image_size)
 
     def initialize_level(self, level=2):
