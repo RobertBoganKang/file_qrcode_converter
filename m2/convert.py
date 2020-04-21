@@ -94,8 +94,6 @@ class Common(object):
         if 0 < min(self.image_size) <= 3:
             print('warning: the image size will be larger than 3 pixels for each side!')
             self.retype_size(array_list)
-        # initialize image
-        self.initialize_image_size(image_size=self.image_size)
 
         retype = False
         if self.image_size[0] <= 0 or self.image_size[1] <= 0:
@@ -119,6 +117,9 @@ class Common(object):
         else:
             retype = self.check_size_limit(0) or retype
             retype = self.check_size_limit(1) or retype
+        # initialize image
+        self.initialize_image_size(image_size=self.image_size)
+        # if retype, do it again
         if retype:
             self.retype_size(array_list)
 
