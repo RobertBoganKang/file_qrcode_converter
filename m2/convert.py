@@ -177,10 +177,6 @@ class Common(object):
         return out_path
 
 
-# multiprocessing of encoding
-global array_dict
-
-
 class File2Image(Common):
     """ encoder """
 
@@ -274,29 +270,28 @@ class File2Image(Common):
 
         for a in array:
             array_list.extend(self.to_base(a, self.n_base, self.n_digits))
-        array_dict[idx] = array_list
+        return idx, array_list
 
     def split_array(self, array):
         """
         split the `1-Byte` or `8-bit` into several chunks of data
         @param array: list(int); range of integer is `0 ~ 255`
         """
-        global array_dict
-        array_dict = mp.Manager().dict()
         # split chunks
         array = self.chunk_it(array, self.cpu_number)
         pool = mp.Pool(self.cpu_number)
+        results = []
         for i, arr in enumerate(array):
-            pool.apply_async(self.split_array_single, args=(arr, i,))
+            results.append(pool.apply_async(self.split_array_single, args=(arr, i,)))
         pool.close()
         pool.join()
 
-        # rebuild array
+        results = [x.get() for x in results]
+        results.sort(key=lambda x: x[0])
         array_list = []
-        for i in range(len(array_dict)):
-            array_list.extend(array_dict[i])
-            del array_dict[i]
-        del array_dict
+        for res in results:
+            array_list.extend(res[-1])
+
         return array_list
 
     def encode_header(self, i):
