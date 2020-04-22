@@ -254,7 +254,7 @@ class File2Image(Common):
         array_list = []
 
         for a in array:
-            array_list += self.to_base(a, self.n_base, self.n_digits)
+            array_list.extend(self.to_base(a, self.n_base, self.n_digits))
         return array_list
 
     def encode_header(self, i):
