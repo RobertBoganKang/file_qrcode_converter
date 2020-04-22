@@ -526,6 +526,7 @@ class SingleImage2TempFile(Common):
         @return: matrix of cropped image
         """
         i, j = idx
+
         # find to the right
         while i < len(matrix) - 1:
             if np.mean(np.abs(matrix[i + 1, j] - target)) < tolerance:
@@ -534,6 +535,8 @@ class SingleImage2TempFile(Common):
                 # check corner
                 if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
                     break
+                else:
+                    raise ValueError()
         while j < len(matrix[0]) - 1:
             if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
                 j += 1
@@ -541,6 +544,8 @@ class SingleImage2TempFile(Common):
                 # check corner
                 if np.mean(np.abs(matrix[i - 1, j] - target)) < tolerance:
                     break
+                else:
+                    raise ValueError()
         return matrix[idx[0] + 1:i, idx[1] + 1:j]
 
     def image_path_to_data(self, path):
@@ -552,15 +557,26 @@ class SingleImage2TempFile(Common):
         # read image
         img = Image.open(path).convert('RGB')
         img = np.array(img)
-        # set 16 tolerance to find corner of black frame
-        # find upper-left corner
-        index = self.zig_zag_traversal_find_upper_left_corner(img, self.frame_color, 16)
-        if index is not None:
-            # set 32 as tolerance to find edges
-            cropped_image = self.find_bottom_right_corner_crop_image(img, self.frame_color, index, 32)
-            return cropped_image.flatten()
-        else:
-            raise ValueError(f'[{path}] cannot be decoded!')
+
+        # try values
+        initial_tolerance = 8
+        while True:
+            if initial_tolerance > 64:
+                raise ValueError(f'[{path}] cannot be decoded!')
+            # noinspection PyBroadException
+            try:
+                # try several tolerance to find corner of black frame
+                # find upper-left corner
+                index = self.zig_zag_traversal_find_upper_left_corner(img, self.frame_color, initial_tolerance)
+                if index is not None:
+                    # try several tolerance to find edges
+                    cropped_image = self.find_bottom_right_corner_crop_image(img, self.frame_color, index,
+                                                                             initial_tolerance * 2)
+                    return cropped_image.flatten()
+                else:
+                    raise ValueError()
+            except Exception:
+                initial_tolerance *= 2
 
     def path_decode_to_temp_data(self, path):
         # extract data from image
