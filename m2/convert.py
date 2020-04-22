@@ -177,6 +177,10 @@ class Common(object):
         return out_path
 
 
+# multiprocessing of encoding
+global array_dict
+
+
 class File2Image(Common):
     """ encoder """
 
@@ -246,15 +250,53 @@ class File2Image(Common):
             b += b'\x00'
         return b
 
+    @staticmethod
+    def chunk_it(seq, num):
+        """
+        split a list into n parts
+        [https://stackoverflow.com/questions/2130016/splitting-a-list-into-n-parts-of-approximately-equal-length]
+        :param seq: list(<>); array
+        :param num: int; number of splits
+        :return: array
+        """
+        avg = len(seq) / float(num)
+        out = []
+        last = 0.0
+
+        while last < len(seq):
+            out.append(seq[int(last):int(last + avg)])
+            last += avg
+        return out
+
+    def split_array_single(self, array, idx):
+        """ process encoding of each chunk """
+        array_list = []
+
+        for a in array:
+            array_list.extend(self.to_base(a, self.n_base, self.n_digits))
+        array_dict[idx] = array_list
+
     def split_array(self, array):
         """
         split the `1-Byte` or `8-bit` into several chunks of data
         @param array: list(int); range of integer is `0 ~ 255`
         """
-        array_list = []
+        global array_dict
+        array_dict = mp.Manager().dict()
+        # split chunks
+        array = self.chunk_it(array, self.cpu_number)
+        pool = mp.Pool(self.cpu_number)
+        for i, arr in enumerate(array):
+            pool.apply_async(self.split_array_single, args=(arr, i,))
+        pool.close()
+        pool.join()
 
-        for a in array:
-            array_list.extend(self.to_base(a, self.n_base, self.n_digits))
+        # rebuild array
+        array_list = []
+        for i in range(len(array_dict)):
+            array_list.extend(array_dict[i])
+            del array_dict[i]
+        del array_dict
         return array_list
 
     def encode_header(self, i):
