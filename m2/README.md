@@ -23,6 +23,7 @@ The python library of `pillow` and `pypng`.
 * `--level`: the quality level of image: 1, 2, 3, 4; larger level number will carry more data.
 * `--compress`: the encoding compression level: 0 ~ 9 or -1 as default.
 * `--image_size`: image size in pixel; please follow 2 numbers; if given one image size, the image would be square; if one or all parameter are `<=0`, it will convert into one image but to consider this dimension is not given.
+* `--channel_mask`: add channel mask if not given full `rgb`, such as `gb` will abandon `r` channel when encode.
 
 ## Warning
 

@@ -1,6 +1,7 @@
 import argparse
 import multiprocessing as mp
 import os
+import readline
 import shutil
 import zlib
 
@@ -21,10 +22,12 @@ class Common(object):
     ----------------------------------------------
     Description of `header` in image pixels,
         given image as an example:
-        * 6 pixels store the information of `index`
-            and `level` for encoding and decoding process.
+        * 7 pixels store the information of `index`,
+            `level` for encoding and decoding process,
+            and mask rgb channel info
             * `16_bits` stores the index [0, 65535].
             * `2_bits` stores the level [0, 3].
+            * `3_bits` stores the rgb mask: 3 channels.
     ----------------------------------------------
     Description of header info of data (store file name):
         [256 Bytes store 256 characters] to store file name
@@ -36,15 +39,27 @@ class Common(object):
 
         # initialize
         self.n_digits = None
+        self.expand_n_digits = None
         self.n_base = None
         self.n_gap = None
         self.image_data_carry = None
+        self.image_data_raw_size = None
         self.last_empty_data_carry = None
+        self.rbk_array = None
+        self.rgb_channel_mask_valid = None
         # black frame color defines here
         self.frame_color = [0, 0, 0]
         # image size limit defines here (2K screen size)
         self.image_size_limit = [1900, 1000]
         self.golden_ratio = (np.sqrt(5) - 1) / 2
+        # rgb channel mask
+        self.rgb_channel_mask = [0, 0, 0]
+        # constants
+        self.header_pixel_number = 7
+
+        # command line fix
+        readline.set_completer_delims(' \t\n;')
+        readline.parse_and_bind("tab: complete")
 
     def retype_size(self, array_list):
         """ try to type new image size """
@@ -91,8 +106,8 @@ class Common(object):
             # noinspection PyUnresolvedReferences
             self.image_size = [self.image_size[0], self.image_size[0]]
         # check output image size
-        if 0 < min(self.image_size) <= 3:
-            print('warning: the image size will be larger than 3 pixels for each side!')
+        if 0 <= self.image_size[0] * self.image_size[1] <= self.header_pixel_number + np.ceil(8 / 3):
+            print('warning: the image size too small!')
             self.retype_size(array_list)
 
         retype = False
@@ -101,7 +116,8 @@ class Common(object):
             # set default smallest image size mode
             if self.image_size[0] <= 0 and self.image_size[1] <= 0:
                 # smallest image size mode, image with golden ratio
-                size = np.sqrt((len(array_list) / 3 + 6) / self.golden_ratio)
+                size = np.sqrt(
+                    (len(array_list) / self.rgb_channel_mask_valid + self.header_pixel_number) / self.golden_ratio)
                 self.image_size[0] = int(np.ceil(size))
                 self.image_size[1] = int(np.ceil(self.golden_ratio * size))
                 if self.image_size[0] > self.image_size_limit[1]:
@@ -109,10 +125,16 @@ class Common(object):
                     retype = True
             # fix one image size
             elif self.image_size[0] <= 0:
-                self.image_size[0] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[1]))
+                self.image_size[0] = int(
+                    np.ceil(
+                        (len(array_list) / self.rgb_channel_mask_valid + self.header_pixel_number) / self.image_size[
+                            1]))
                 retype = self.check_size_limit(0) or retype
             elif self.image_size[1] <= 0:
-                self.image_size[1] = int(np.ceil((len(array_list) / 3 + 6) / self.image_size[0]))
+                self.image_size[1] = int(
+                    np.ceil(
+                        (len(array_list) / self.rgb_channel_mask_valid + self.header_pixel_number) / self.image_size[
+                            0]))
                 retype = self.check_size_limit(1) or retype
         else:
             retype = self.check_size_limit(0) or retype
@@ -134,14 +156,17 @@ class Common(object):
     def initialize_image_size(self, image_size=(1200, 800)):
         """ initialize image_size parameters """
         self.image_size = image_size
-        # given six `1_bit` * `3-channels` pixels as header to store info
-        # 3-channels * 6-pixels = 16_bit-index + 2_bit-level == 18_bits
-        self.image_data_carry = (self.image_size[0] * self.image_size[1] - 6) * 3
-        # crop it to store Bytes not bit splits, the rest will fill with empty white pixels
-        # the number of last data to be empty
-        self.last_empty_data_carry = self.image_data_carry - self.image_data_carry // self.n_digits * self.n_digits
+        # given seven `1_bit` * `3-channels` pixels as header to store info
+        # 3-channels * 7-pixels = 16_bit-index + 2_bit-level + 3_bit-channel_mask == 21_bits
+        body_pixels = (self.image_size[0] * self.image_size[1] - self.header_pixel_number)
+        bytes_to_encode = int(body_pixels * self.rgb_channel_mask_valid / self.n_digits)
+        self.image_data_raw_size = body_pixels * 3
         # the number of data for each image to carry
-        self.image_data_carry -= self.last_empty_data_carry
+        self.image_data_carry = bytes_to_encode * self.n_digits
+        # crop it to store Bytes not bit splits (to make sure each image will decode complete bytes),
+        # the rest will fill with empty white pixels, the number of last data to be empty
+        self.last_empty_data_carry = (
+                self.image_data_raw_size - int(self.image_data_carry / self.rgb_channel_mask_valid * 3))
 
     @staticmethod
     def cpu_count(cpu):
@@ -194,6 +219,22 @@ class File2Image(Common):
 
         # fix input path
         self.check_output_folder()
+
+        # rgb channel info
+        self.rgb_channel_string = ops.channel_mask
+
+    def initialize_channel_mask_info(self):
+        string = self.rgb_channel_string
+        """ extract rgb channel mask information into array """
+        if 'r' in string:
+            self.rgb_channel_mask[0] = 1
+        if 'g' in string:
+            self.rgb_channel_mask[1] = 1
+        if 'b' in string:
+            self.rgb_channel_mask[2] = 1
+        self.rgb_channel_mask_valid = np.sum(self.rgb_channel_mask)
+        if self.rgb_channel_mask_valid == 0:
+            raise ValueError('rgb channel mask should have at least one channel to be valid.')
 
     def ask_for_new_path(self):
         new_path = input('please type new path for exporting data-image:')
@@ -295,7 +336,7 @@ class File2Image(Common):
         return array_list
 
     def encode_header(self, i):
-        result = self.to_base(i, 2, 16) + self.to_base(self.level - 1, 2, 2)
+        result = self.to_base(i, 2, 16) + self.to_base(self.level - 1, 2, 2) + self.rgb_channel_mask
         return [255 - x * 255 for x in result]
 
     def data_to_pixel(self, num):
@@ -324,13 +365,22 @@ class File2Image(Common):
         img.save(out_image_path)
         print(f'[{out_image_path}] has been exported ~')
 
-    def encode_image_single(self, bundles):
-        array_list, out_folder, i = bundles
-        image_array = np.array(self.encode_header(i)
-                               + [self.data_to_pixel(array_list[ii]) for ii in
-                                  range(i * self.image_data_carry, (i + 1) * self.image_data_carry)]
-                               + [255 for _ in range(self.last_empty_data_carry)])
-        self.export_image_helper(image_array, i, out_folder)
+    def encode_pixel_with_mask(self, array_list, ii, total):
+        rebuild_array = []
+        # starting encoding
+        # index of flatten data in pixel
+        i_flatten_pix = 0
+        while i_flatten_pix < total:
+            mask_channel = self.rgb_channel_mask[i_flatten_pix % 3]
+            if mask_channel == 1:
+                # 1 to encode
+                rebuild_array.append(self.data_to_pixel(array_list[ii]))
+                ii += 1
+            else:
+                # 0 to fill useless pattern
+                rebuild_array.append(self.rbk_array[i_flatten_pix + 21])
+            i_flatten_pix += 1
+        return rebuild_array
 
     @staticmethod
     def rbk_background(s1, s2):
@@ -350,6 +400,7 @@ class File2Image(Common):
 
         rbk = rbk.split(',')
         r_color = [255, 0, 0]
+        # g_color = [0, 255, 0]
         b_color = [0, 0, 255]
         k_color = [64, 64, 64]
         dot_color = [255, 255, 255]
@@ -373,6 +424,16 @@ class File2Image(Common):
         table = np.array(table)
         return table
 
+    def encode_image_single(self, bundles):
+        array_list, out_folder, i = bundles
+        image_array = np.array(self.encode_header(i)
+                               + self.encode_pixel_with_mask(array_list, i * self.image_data_carry,
+                                                             int(
+                                                                 self.image_data_carry / self.rgb_channel_mask_valid * 3
+                                                             ))
+                               + [255 for _ in range(self.last_empty_data_carry)])
+        self.export_image_helper(image_array, i, out_folder)
+
     def encode_image(self, array_list, out_folder):
         """
         split image
@@ -388,23 +449,26 @@ class File2Image(Common):
         if i_length > 65535:
             raise OverflowError('file is too big ~')
         bundles = [[array_list, out_folder, x] for x in range(i_length)]
+        # extract rbk background
+        self.rbk_array = self.rbk_background(self.image_size[0], self.image_size[1]).flatten()
         # encode images
         with mp.Pool(self.cpu_number) as pool:
             pool.map(self.encode_image_single, bundles)
         last_array_list = array_list[i_length * self.image_data_carry:]
         # encode image for rest of data
         if len(last_array_list) != 0:
+            total_size = int(np.ceil(len(last_array_list) / self.rgb_channel_mask_valid * 3))
             # flatten the multi-dimensional table to array
-            rbk_array = self.rbk_background(self.image_size[0], self.image_size[1]).flatten()
             image_array = np.array(
                 self.encode_header(i_length)
-                + [self.data_to_pixel(ii) for ii in last_array_list]
+                # + [self.data_to_pixel(ii) for ii in last_array_list]
+                + self.encode_pixel_with_mask(last_array_list, 0, total_size)
                 # compress algorithm will not consider data at the end
                 # final empty data with interesting background
                 # add rbk background
-                + [rbk_array[i] for i in
+                + [self.rbk_array[i] for i in
                    range(self.image_size[0] * self.image_size[1] * 3
-                         - (self.image_data_carry - len(last_array_list) + self.last_empty_data_carry),
+                         - (self.image_data_raw_size - total_size),
                          self.image_size[0] * self.image_size[1] * 3
                          )
                    ]
@@ -412,6 +476,7 @@ class File2Image(Common):
             self.export_image_helper(image_array, i_length, out_folder)
 
     def encode(self):
+        self.initialize_channel_mask_info()
         with open(self.input, 'rb') as f:
             b_arr = f.read()
             # add file name
@@ -440,6 +505,17 @@ class SingleImage2TempFile(Common):
             integer += i
         return int(integer)
 
+    @staticmethod
+    def remove_mask_array(array, rgb_channel_mask):
+        if np.sum(rgb_channel_mask) == 3:
+            return array
+        else:
+            array_rebuild = []
+            for i in range(len(array)):
+                if rgb_channel_mask[i % 3] == 1:
+                    array_rebuild.append(array[i])
+            return array_rebuild
+
     def combine_array(self, array):
         combined_list = []
         for i in range(len(array) // self.n_digits):
@@ -453,7 +529,7 @@ class SingleImage2TempFile(Common):
 
     def decode_header(self, array):
         array = [round(1 - x / 255) for x in array]
-        return self.from_base(array[:16], 2), self.from_base(array[16:18], 2) + 1
+        return self.from_base(array[:16], 2), self.from_base(array[16:18], 2) + 1, array[18:21]
 
     def zig_zag_traversal_find_upper_left_corner(self, matrix, identifier, tolerance):
         """
@@ -581,10 +657,12 @@ class SingleImage2TempFile(Common):
     def path_decode_to_temp_data(self, path):
         # extract data from image
         data = self.image_path_to_data(path)
-        index, level = self.decode_header(data[:18])
+        index, level, rgb_channel_mask = self.decode_header(data[:21])
         # get all parameters for decoding
         self.initialize_level(level)
-        decoded_data = self.combine_array([self.pixel_to_data(x) for x in data[18:]])
+        file_data = [self.pixel_to_data(x) for x in data[21:]]
+        file_data_no_mask = self.remove_mask_array(file_data, rgb_channel_mask)
+        decoded_data = self.combine_array(file_data_no_mask)
         return index, decoded_data
 
     def decode_to_temp_file(self, params):
@@ -674,6 +752,9 @@ if __name__ == '__main__':
 
     # argument for image
     parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=1)
+    parser.add_argument('--channel_mask', '-c', type=str, help='channel mask for image, '
+                                                               'write `r`, `g`, `b` or its combinations',
+                        default='rgb')
     parser.add_argument('--compress', '-z', type=int, help='the encoding compression level: 0 ~ 9 or -1 as default',
                         default=1)
     parser.add_argument('--image_size', '-s', type=int,

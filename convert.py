@@ -21,6 +21,10 @@ class CommonUtils(object):
         self.color_dim = len(self.color_space)
         self.out_format = self.determine_format()
 
+        # command line fix
+        readline.set_completer_delims(' \t\n;')
+        readline.parse_and_bind("tab: complete")
+
     @staticmethod
     def cpu_count(cpu):
         """
