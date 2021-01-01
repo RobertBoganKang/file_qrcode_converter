@@ -2,6 +2,7 @@ import argparse
 import base64
 import multiprocessing
 import os
+import readline
 import shutil
 import zlib
 
