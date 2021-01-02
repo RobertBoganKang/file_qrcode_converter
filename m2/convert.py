@@ -61,6 +61,11 @@ class Common(object):
         readline.set_completer_delims(' \t\n;')
         readline.parse_and_bind("tab: complete")
 
+    @staticmethod
+    def error_print(content):
+        print(content)
+        exit(0)
+
     def retype_size(self, array_list):
         """ try to type new image size """
         while True:
@@ -69,7 +74,7 @@ class Common(object):
                 new_size = input('--> please type a new image size (split with space): ')
                 new_size = new_size.strip().split()
                 if len(new_size) == 0:
-                    raise ValueError()
+                    self.error_print('please type at least one value')
                 self.image_size = [int(x) for x in new_size]
             except Exception:
                 print('warning: input not recognized!')
@@ -215,6 +220,7 @@ class File2Image(Common):
         self.image_size = ops.image_size
 
         # initialize with given parameters
+        self.check_args_input(ops)
         self.initialize_level(level=ops.level)
 
         # fix input path
@@ -222,6 +228,14 @@ class File2Image(Common):
 
         # rgb channel info
         self.rgb_channel_string = ops.channel_mask
+
+    def check_args_input(self, ops):
+        # check compression level
+        if ops.compress > 9 or ops.compress < -1:
+            self.error_print('the compression level should in the range of -1 ~ 9')
+        # check level number error
+        if ops.level > 4 or ops.level < 1:
+            self.error_print('the level number should be 1, 2, 3 or 4')
 
     def initialize_channel_mask_info(self):
         string = self.rgb_channel_string
@@ -234,7 +248,7 @@ class File2Image(Common):
             self.rgb_channel_mask[2] = 1
         self.rgb_channel_mask_valid = np.sum(self.rgb_channel_mask)
         if self.rgb_channel_mask_valid == 0:
-            raise ValueError('rgb channel mask should have at least one channel to be valid.')
+            self.error_print('rgb channel mask should have at least one channel to be valid.')
 
     def ask_for_new_path(self):
         new_path = input('please type new path for exporting data-image:')
@@ -447,7 +461,7 @@ class File2Image(Common):
         i_length = len(array_list) // self.image_data_carry
         # if file too big for index
         if i_length > 65535:
-            raise OverflowError('file is too big ~')
+            self.error_print('file is too big ~')
         bundles = [[array_list, out_folder, x] for x in range(i_length)]
         # extract rbk background
         self.rbk_array = self.rbk_background(self.image_size[0], self.image_size[1]).flatten()
@@ -580,8 +594,7 @@ class SingleImage2TempFile(Common):
                     solution[total].append(matrix[i, j])
         return None
 
-    @staticmethod
-    def find_bottom_right_corner_crop_image(matrix, target, idx, tolerance):
+    def find_bottom_right_corner_crop_image(self, matrix, target, idx, tolerance):
         """
         find the bottom-right pixel index from upper-left pixel index \
             and crop the image.
@@ -612,7 +625,8 @@ class SingleImage2TempFile(Common):
                 if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
                     break
                 else:
-                    raise ValueError()
+                    self.error_print('cannot find upper-right corner')
+        # find to the bottom
         while j < len(matrix[0]) - 1:
             if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
                 j += 1
@@ -621,7 +635,7 @@ class SingleImage2TempFile(Common):
                 if np.mean(np.abs(matrix[i - 1, j] - target)) < tolerance:
                     break
                 else:
-                    raise ValueError()
+                    self.error_print('cannot find bottom-right corner')
         return matrix[idx[0] + 1:i, idx[1] + 1:j]
 
     def image_path_to_data(self, path):
@@ -638,7 +652,7 @@ class SingleImage2TempFile(Common):
         initial_tolerance = 8
         while True:
             if initial_tolerance > 64:
-                raise ValueError(f'[{path}] cannot be decoded!')
+                self.error_print(f'[{path}] cannot be decoded!')
             # noinspection PyBroadException
             try:
                 # try several tolerance to find corner of black frame
@@ -650,7 +664,7 @@ class SingleImage2TempFile(Common):
                                                                              initial_tolerance * 2)
                     return cropped_image.flatten()
                 else:
-                    raise ValueError()
+                    self.error_print('cannot find upper-left corner')
             except Exception:
                 initial_tolerance *= 2
 
@@ -675,10 +689,11 @@ class SingleImage2TempFile(Common):
         print(f'[{path}] has been decoded ~')
 
 
-class Image2File(object):
+class Image2File(Common):
     """ decoder """
 
     def __init__(self, ops):
+        super().__init__()
         self.input = ops.input
         self.output = self.output = Common.fix_out_path(self.input, ops.output, encode=False)
         self.cpu_number = Common.cpu_count(ops.cpu_number)
@@ -700,7 +715,7 @@ class Image2File(object):
         image_files = [os.path.join(self.input, x) for x in image_files if not x.endswith('.tmp')]
         # if no image found
         if len(image_files) == 0:
-            raise FileNotFoundError('no image found!')
+            self.error_print('no image found!')
         # get number of images
         self.image_number = len(image_files)
         # decode images
@@ -720,7 +735,7 @@ class Image2File(object):
         for i in range(numbers[-1] + 1):
             data_file_path = os.path.join(self.input, str(i) + '.tmp')
             if not os.path.exists(data_file_path):
-                raise FileNotFoundError(f'[{data_file_path}] data file not found!')
+                self.error_print(f'[{data_file_path}] data file not found!')
             with open(data_file_path, 'rb') as f:
                 b_data = f.read()
                 data_combine += b_data
@@ -764,13 +779,6 @@ if __name__ == '__main__':
                              'but to consider this image size are not given.', nargs='+', default=None)
     args = parser.parse_args()
 
-    # check compression level
-    if args.compress > 9 or args.compress < -1:
-        raise ValueError('the compression level should in the range of -1 ~ 9')
-    # check level number error
-    if args.level > 4 or args.level < 1:
-        raise ValueError('the level number should be 1, 2, 3 or 4')
-
     # encoding and decoding
     if args.input is not None and os.path.exists(args.input) and os.path.isfile(args.input):
         if args.output is None:
@@ -789,4 +797,5 @@ if __name__ == '__main__':
         img2f = Image2File(args)
         img2f.decode()
     else:
-        raise TypeError('input not recognized')
+        print('input not recognized')
+        exit(0)
