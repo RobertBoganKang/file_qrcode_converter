@@ -106,7 +106,7 @@ class Common(object):
             # noinspection PyUnresolvedReferences
             self.image_size = [self.image_size[0], self.image_size[0]]
         # check output image size
-        if 0 <= self.image_size[0] * self.image_size[1] <= self.header_pixel_number + np.ceil(8 / 3):
+        if 0 < self.image_size[0] * self.image_size[1] <= self.header_pixel_number + np.ceil(8 / 3):
             print('warning: the image size too small!')
             self.retype_size(array_list)
 
