@@ -3,6 +3,7 @@ import multiprocessing as mp
 import os
 import readline
 import shutil
+import sys
 import zlib
 
 import numpy as np
@@ -64,7 +65,7 @@ class Common(object):
     @staticmethod
     def error_print(content):
         print(content)
-        exit(0)
+        sys.exit(0)
 
     def retype_size(self, array_list):
         """ try to type new image size """
@@ -798,4 +799,4 @@ if __name__ == '__main__':
         img2f.decode()
     else:
         print('input not recognized')
-        exit(0)
+        sys.exit(0)
