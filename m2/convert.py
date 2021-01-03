@@ -3,7 +3,6 @@ import multiprocessing as mp
 import os
 import readline
 import shutil
-import sys
 import zlib
 
 import numpy as np
@@ -64,8 +63,7 @@ class Common(object):
 
     @staticmethod
     def error_print(content):
-        print(content)
-        sys.exit(0)
+        raise ValueError(content)
 
     def retype_size(self, array_list):
         """ try to type new image size """
@@ -476,7 +474,6 @@ class File2Image(Common):
             # flatten the multi-dimensional table to array
             image_array = np.array(
                 self.encode_header(i_length)
-                # + [self.data_to_pixel(ii) for ii in last_array_list]
                 + self.encode_pixel_with_mask(last_array_list, 0, total_size)
                 # compress algorithm will not consider data at the end
                 # final empty data with interesting background
@@ -626,7 +623,7 @@ class SingleImage2TempFile(Common):
                 if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
                     break
                 else:
-                    self.error_print('cannot find upper-right corner')
+                    self.error_print('cannot find upper-right corner!')
         # find to the bottom
         while j < len(matrix[0]) - 1:
             if np.mean(np.abs(matrix[i, j + 1] - target)) < tolerance:
@@ -636,7 +633,7 @@ class SingleImage2TempFile(Common):
                 if np.mean(np.abs(matrix[i - 1, j] - target)) < tolerance:
                     break
                 else:
-                    self.error_print('cannot find bottom-right corner')
+                    self.error_print('cannot find bottom-right corner!')
         return matrix[idx[0] + 1:i, idx[1] + 1:j]
 
     def image_path_to_data(self, path):
@@ -665,7 +662,7 @@ class SingleImage2TempFile(Common):
                                                                              initial_tolerance * 2)
                     return cropped_image.flatten()
                 else:
-                    self.error_print('cannot find upper-left corner')
+                    self.error_print('cannot find upper-left corner!')
             except Exception:
                 initial_tolerance *= 2
 
@@ -798,5 +795,4 @@ if __name__ == '__main__':
         img2f = Image2File(args)
         img2f.decode()
     else:
-        print('input not recognized')
-        sys.exit(0)
+        raise FileNotFoundError('input not recognized')
