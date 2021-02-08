@@ -754,6 +754,7 @@ class Image2File(Common):
         # export
         with open(self.output, 'wb') as w:
             w.write(decoded_data)
+        print(f'[{self.output}] has been generated ~')
 
 
 if __name__ == '__main__':
