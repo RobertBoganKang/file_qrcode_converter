@@ -1,6 +1,6 @@
 import argparse
 import base64
-import multiprocessing
+import multiprocessing as mp
 import os
 import readline
 import shutil
@@ -32,7 +32,7 @@ class CommonUtils(object):
         get the cpu number
         :return: int; valid cpu number
         """
-        max_cpu = multiprocessing.cpu_count()
+        max_cpu = mp.cpu_count()
         if 0 < cpu <= max_cpu:
             return cpu
         elif cpu == 0 or cpu > max_cpu:
@@ -71,6 +71,7 @@ class DecoderUtil(CommonUtils):
         super().__init__(ops)
         self.input = ops.input
         self.output = self.fix_out_path(self.input, ops.output, encode=False)
+        self.max_chunk = mp.Manager().list()
 
     @staticmethod
     def byte_to_index(index_array):
@@ -95,7 +96,7 @@ class DecoderUtil(CommonUtils):
         idx = self.byte_to_index(data[:self.idx_byte])
         if idx == 0:
             data_effective = data[2 * self.idx_byte:]
-            max_chunk.value = self.byte_to_index(data[self.idx_byte:2 * self.idx_byte])
+            self.max_chunk.append(self.byte_to_index(data[self.idx_byte:2 * self.idx_byte]))
         else:
             data_effective = data[self.idx_byte:]
         return data_effective, idx
@@ -206,7 +207,7 @@ class QR2File(DecoderUtil):
             fs.append(os.path.join(self.input, name))
         if len(fs) == 0:
             raise FileNotFoundError('no image found!')
-        with multiprocessing.Pool(self.cpu_number) as pool:
+        with mp.Pool(self.cpu_number) as pool:
             pool.map(self.separate_image, fs)
 
     # decode data
@@ -247,9 +248,7 @@ class QR2File(DecoderUtil):
     def extract_data_from_qr(self):
         """ main function for extraction"""
         # noinspection PyGlobalUndefined
-        global max_chunk
-        max_chunk = multiprocessing.Value('i')
-        with multiprocessing.Pool(self.cpu_number) as pool:
+        with mp.Pool(self.cpu_number) as pool:
             names = []
             names_ = os.listdir(self.input)
             # select and clean all other files
@@ -264,8 +263,11 @@ class QR2File(DecoderUtil):
                 names = [x for x in names_ if x.startswith('#_')]
             pool.map(self.extract_helper, names)
 
+        if len(self.max_chunk) == 0:
+            raise ValueError('first image missing')
+
         data_rebuild = b''
-        for i in range(max_chunk.value):
+        for i in range(self.max_chunk[0]):
             data_file_path = os.path.join(self.input, str(i))
             with open(data_file_path, 'rb') as f:
                 image_byte_array = f.read()
@@ -346,7 +348,7 @@ class File2QR(EncoderUtil):
     def export_qr_code(self):
         chunks_raw = self.create_chunks()
         chunks_raw = [(i, x) for i, x in enumerate(chunks_raw)]
-        with multiprocessing.Pool(self.cpu_number) as pool:
+        with mp.Pool(self.cpu_number) as pool:
             pool.map(self.export_qr_code_helper, chunks_raw)
 
     # combine image into image channels
@@ -386,7 +388,7 @@ class File2QR(EncoderUtil):
                 img_array = [os.path.join(self.output, 't' + str(x) + '.png') for x in
                              range(i * self.color_dim, (i + 1) * self.color_dim)]
                 fs.append((img_array, out_path))
-        with multiprocessing.Pool(self.cpu_number) as pool:
+        with mp.Pool(self.cpu_number) as pool:
             pool.map(self.merge_image, fs)
 
         # change name of last few images
