@@ -9,10 +9,6 @@ import zlib
 from PIL import Image
 
 
-################
-# common utils #
-################
-
 class CommonUtils(object):
     def __init__(self, ops):
         # the number of byte to store index
@@ -172,10 +168,6 @@ class EncoderUtil(CommonUtils):
         return chunks
 
 
-############################
-# QR-Code & File Converter #
-############################
-
 class QR2File(DecoderUtil):
     """ decode """
 
@@ -333,10 +325,10 @@ class File2QR(EncoderUtil):
                         print('input not recognized!')
 
     def prepare_qr_code_image(self, data, out_path):
-        import pyqrcode
+        import segno
         # require `pypng` library
-        img = pyqrcode.create(data, error=self.quality)
-        img.png(out_path, scale=10)
+        img = segno.make_qr(data, error=self.quality)
+        img.save(out_path, scale=10)
 
     def export_qr_code_helper(self, chunk):
         i, chunk = chunk

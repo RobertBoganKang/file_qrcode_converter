@@ -10,7 +10,7 @@ It is safe to use since multiple way of file checking will ensure NO DATA WILL L
 ### Taking pictures
 Use camera with 1 to 1 ratio of pictures when taking pictures from screen can achieve better result.
 ## Requirement
-The python library of `pillow`, `pyqrcode`, `pypng`, `zbar` and `pyzbar` are required.
+The python library of `pillow`, `segno`, `pypng`, `zbar` and `pyzbar` are required.
 The system library of `libzbar` is also needed (Ubuntu: `apt-get install libzbar-dev`).
 
 ## Usage
