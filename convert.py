@@ -9,7 +9,7 @@ import zlib
 from PIL import Image
 
 
-class CommonUtils(object):
+class QRCommon(object):
     def __init__(self, ops):
         # the number of byte to store index
         self.idx_byte = ops.index_byte
@@ -62,7 +62,7 @@ class CommonUtils(object):
         return out_path
 
 
-class DecoderUtil(CommonUtils):
+class QRDecoder(QRCommon):
     def __init__(self, ops):
         super().__init__(ops)
         self.input = ops.input
@@ -103,7 +103,7 @@ class DecoderUtil(CommonUtils):
         return bytes(d).decode('utf-8')
 
 
-class EncoderUtil(CommonUtils):
+class QREncoder(QRCommon):
     def __init__(self, ops):
         super().__init__(ops)
         self.input = ops.input
@@ -168,7 +168,7 @@ class EncoderUtil(CommonUtils):
         return chunks
 
 
-class QR2File(DecoderUtil):
+class QR2File(QRDecoder):
     """ decode """
 
     def __init__(self, ops):
@@ -283,7 +283,7 @@ class QR2File(DecoderUtil):
         print(f'[{self.output}] has been exported ~')
 
 
-class File2QR(EncoderUtil):
+class File2QR(QREncoder):
     """ encode """
 
     def __init__(self, ops):

@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 
 
-class Common(object):
+class ImageCommon(object):
     """
     Description of `level`:
         Level 1: `1-bit` * `8-digits` == `1-Byte`
@@ -206,7 +206,7 @@ class Common(object):
         return out_path
 
 
-class File2Image(Common):
+class File2Image(ImageCommon):
     """ encoder """
 
     def __init__(self, ops):
@@ -501,7 +501,7 @@ class File2Image(Common):
             self.encode_image(encoded_data, self.output)
 
 
-class SingleImage2TempFile(Common):
+class SingleImage2TempFile(ImageCommon):
     """ decode one image to temp file """
 
     def __init__(self):
@@ -687,14 +687,15 @@ class SingleImage2TempFile(Common):
         print(f'[{path}] has been decoded ~')
 
 
-class Image2File(Common):
+class Image2File(ImageCommon):
     """ decoder """
 
     def __init__(self, ops):
         super().__init__()
         self.input = ops.input
-        self.output = self.output = Common.fix_out_path(self.input, ops.output, encode=False)
-        self.cpu_number = Common.cpu_count(ops.cpu_number)
+        self.output = self.output = self.fix_out_path(self.input, ops.output, encode=False)
+        self.cpu_number = self.cpu_count(ops.cpu_number)
+        self.decoder = SingleImage2TempFile()
 
         self.image_number = None
 
@@ -705,8 +706,7 @@ class Image2File(Common):
 
     def decode_image_to_temp_file_single(self, path):
         # create new object for each image of decoding
-        decode = SingleImage2TempFile()
-        decode.decode_to_temp_file([path, self.image_number])
+        self.decoder.decode_to_temp_file([path, self.image_number])
 
     def decode_image_to_temp_file(self):
         image_files = os.listdir(self.input)
