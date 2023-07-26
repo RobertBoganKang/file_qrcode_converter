@@ -63,7 +63,7 @@ class ImageCommon(object):
 
     @staticmethod
     def error_print(content):
-        raise ValueError(content)
+        raise ValueError('ERROR: ' + content)
 
     def retype_size(self, array_list):
         """ try to type new image size """
@@ -76,7 +76,7 @@ class ImageCommon(object):
                     self.error_print('please type at least one value')
                 self.image_size = [int(x) for x in new_size]
             except Exception:
-                print('warning: input not recognized!')
+                print('WARNING: input not recognized!')
                 continue
             break
         self.fix_image_parameters(array_list)
@@ -88,7 +88,7 @@ class ImageCommon(object):
             pattern = '{|}'
         if self.image_size[num] > self.image_size_limit[num]:
             print(
-                f'warning: (image size)[{num}] @ {pattern} too big '
+                f'WARNING: (image size)[{num}] @ {pattern} too big '
                 f'({self.image_size[num]}px > {self.image_size_limit[num]}px)!'
             )
             return True
@@ -111,7 +111,7 @@ class ImageCommon(object):
             self.image_size = [self.image_size[0], self.image_size[0]]
         # check output image size
         if 0 < self.image_size[0] * self.image_size[1] <= self.header_pixel_number + np.ceil(8 / 3):
-            print('warning: the image size too small!')
+            print('WARNING: the image size too small!')
             self.retype_size(array_list)
 
         retype = False
@@ -125,7 +125,7 @@ class ImageCommon(object):
                 self.image_size[0] = int(np.ceil(size))
                 self.image_size[1] = int(np.ceil(self.golden_ratio * size))
                 if self.image_size[0] > self.image_size_limit[1]:
-                    print(f'warning: failed to convert into one image!')
+                    print(f'WARNING: failed to convert into one image!')
                     retype = True
             # fix one image size
             elif self.image_size[0] <= 0:
@@ -760,22 +760,24 @@ class Image2File(ImageCommon):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='convert file to image code; for screenshot')
     # argument for project
-    parser.add_argument('--input', '-i', type=str, help='the source', default=None)
-    parser.add_argument('--output', '-o', type=str, help='the target', default=None)
-    parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
+    io_group = parser.add_argument_group('file i/o')
+    io_group.add_argument('--input', '-i', type=str, help='the source', default=None)
+    io_group.add_argument('--output', '-o', type=str, help='the target', default=None)
+    io_group.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
 
     # argument for image
-    parser.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=1)
-    parser.add_argument('--channel_mask', '-c', type=str, help='channel mask for image, '
-                                                               'write `r`, `g`, `b` or its combinations',
-                        default='rgb')
-    parser.add_argument('--compress', '-z', type=int, help='the encoding compression level: 0 ~ 9 or -1 as default',
-                        default=1)
-    parser.add_argument('--image_size', '-s', type=int,
-                        help='the size of image to encode (pixel); '
-                             'if given one image size, the image would be square; '
-                             'if one or all parameter are `<=0`, it will convert into one image '
-                             'but to consider this image size are not given.', nargs='+', default=None)
+    img_group = parser.add_argument_group('image arguments')
+    img_group.add_argument('--level', '-l', type=int, help='the quality level of image: 1, 2, 3, 4', default=1)
+    img_group.add_argument('--channel_mask', '-c', type=str, help='channel mask for image, '
+                                                                  'write `r`, `g`, `b` or its combinations',
+                           default='rgb')
+    img_group.add_argument('--compress', '-z', type=int, help='the encoding compression level: 0 ~ 9 or -1 as default',
+                           default=1)
+    img_group.add_argument('--image_size', '-s', type=int,
+                           help='the size of image to encode (pixel); '
+                                'if given one image size, the image would be square; '
+                                'if one or all parameter are `<=0`, it will convert into one image '
+                                'but to consider this image size are not given.', nargs='+', default=None)
     args = parser.parse_args()
 
     # encoding and decoding
@@ -796,4 +798,4 @@ if __name__ == '__main__':
         img2f = Image2File(args)
         img2f.decode()
     else:
-        raise FileNotFoundError('input not recognized')
+        raise FileNotFoundError('ERROR: input not recognized')

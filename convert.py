@@ -152,7 +152,7 @@ class QREncoder(QRCommon):
         while i < len(byte_array):
             # check chunk length not to exceed 2^(8*idx_byte) files
             if file_counter >= 2 ** (self.idx_byte * 8):
-                raise OverflowError(f'number of images is [{len(chunks)}] > {2 ** (self.idx_byte * 8)}!')
+                raise OverflowError(f'ERROR: number of images is [{len(chunks)}] > {2 ** (self.idx_byte * 8)}!')
             if (i + self.idx_byte) % (self.chunk_size - self.idx_byte) == 0:
                 chunks.append(self.index_to_byte(file_counter) + bucket)
                 bucket = []
@@ -198,7 +198,7 @@ class QR2File(QRDecoder):
         for name in names:
             fs.append(os.path.join(self.input, name))
         if len(fs) == 0:
-            raise FileNotFoundError('no image found!')
+            raise FileNotFoundError('ERROR: no image found!')
         with mp.Pool(self.cpu_number) as pool:
             pool.map(self.separate_image, fs)
 
@@ -256,7 +256,7 @@ class QR2File(QRDecoder):
             pool.map(self.extract_helper, names)
 
         if len(self.max_chunk) == 0:
-            raise ValueError('first image missing')
+            raise ValueError('ERROR: first image missing')
 
         data_rebuild = b''
         for i in range(self.max_chunk[0]):
@@ -397,17 +397,19 @@ class File2QR(QREncoder):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='convert file to qr code; for camera')
     # argument for project
-    parser.add_argument('--input', '-i', type=str, help='the source', default=None)
-    parser.add_argument('--output', '-o', type=str, help='the target', default=None)
-    parser.add_argument('--chunk_size', '-s', type=int, help='chunk size to encode', default=2048)
-    parser.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
+    io_group = parser.add_argument_group('file i/o')
+    io_group.add_argument('--input', '-i', type=str, help='the source', default=None)
+    io_group.add_argument('--output', '-o', type=str, help='the target', default=None)
+    io_group.add_argument('--cpu_number', '-j', type=int, help='cpu number to process', default=0)
 
     # argument for qr-code
-    parser.add_argument('--quality', '-q', type=str, help='the quality of qr-code: L, M, Q, H', default='L')
-    parser.add_argument('--black_white', '-bw', action='store_true', help='the black white mode for qr-code if have')
+    qr_group = parser.add_argument_group('qr code arguments')
+    qr_group.add_argument('--chunk_size', '-s', type=int, help='chunk size to encode', default=2048)
+    qr_group.add_argument('--quality', '-q', type=str, help='the quality of qr-code: L, M, Q, H', default='L')
+    qr_group.add_argument('--black_white', '-bw', action='store_true', help='the black white mode for qr-code if have')
 
     # encode control (Danger!!)
-    parser.add_argument('--index_byte', '-x', type=int, help='the byte of index info have been used', default=2)
+    qr_group.add_argument('--index_byte', '-x', type=int, help='the byte of index info have been used', default=2)
 
     args = parser.parse_args()
 
@@ -433,4 +435,4 @@ if __name__ == '__main__':
             qr2f.separate_all_image()
         qr2f.extract_data_from_qr()
     else:
-        raise TypeError('input not recognized')
+        raise FileNotFoundError('ERROR: input not recognized')
