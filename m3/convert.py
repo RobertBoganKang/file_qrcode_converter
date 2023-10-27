@@ -21,15 +21,24 @@ class Log2File(object):
 
     @staticmethod
     def string_to_bytes(s):
-        return zlib.decompress(base64.b85decode(s.encode()))
+        original_bytes = zlib.decompress(base64.b85decode(s.encode()))
+        return original_bytes[0], original_bytes[1:]
 
     @staticmethod
     def string_to_path(string):
         return zlib.decompress(base64.b85decode(string.encode())).decode()
 
-    def write_byte(self, string, w):
+    def write_byte(self, string, row_num, w):
         if len(string) > 0:
-            w.write(self.string_to_bytes(string))
+            num, byte = self.string_to_bytes(string)
+            # row number check
+            if (row_num + 1) % 256 == num:
+                w.write(byte)
+                return num
+            else:
+                raise ValueError('ERROR: row number is not continuous!')
+        else:
+            raise ValueError('ERROR: string should not empty!')
 
     @staticmethod
     def check_command(line, rbk='rbk'):
@@ -70,6 +79,7 @@ class Log2File(object):
                     path = os.path.join(out_folder, self.string_to_path(string))
                     print(f'INFO: now decode `{path}`')
                     self.remove_file(path)
+                    row_num = -1
                     with open(path, 'ab') as w:
                         while line:
                             line = f.readline()
@@ -78,7 +88,7 @@ class Log2File(object):
                             if string_status == 0:
                                 # noinspection PyBroadException
                                 try:
-                                    self.write_byte(string, w)
+                                    row_num = self.write_byte(string, row_num, w)
                                 except Exception:
                                     print(f'ERROR: `{path}` error, search next!')
                                     break
@@ -135,8 +145,12 @@ class File2Log(object):
         return line
 
     @staticmethod
-    def bytes_to_string(b):
-        return base64.b85encode(zlib.compress(b)).decode()
+    def bytes_to_string(b, num):
+        """
+        first byte to be the row number index of check
+        """
+        num = num % 256
+        return base64.b85encode(zlib.compress(bytes([num]) + b)).decode()
 
     @staticmethod
     def path_to_string(path):
@@ -151,7 +165,8 @@ class File2Log(object):
             # print file name
             print(self.path_to_string(path))
             row_bytes = b''
-            with open(path, 'rb+') as f:
+            row_num = 0
+            with open(path, 'rb') as f:
                 byte = f.read(1)
                 row_bytes += byte
                 i = 1
@@ -162,11 +177,12 @@ class File2Log(object):
                     row_bytes += byte
                     if i % self.limit == 0:
                         i = 0
-                        string = self.bytes_to_string(row_bytes)
+                        string = self.bytes_to_string(row_bytes, row_num)
+                        row_num += 1
                         print(string)
                         row_bytes = b''
             if len(row_bytes) != 0:
-                string = self.bytes_to_string(row_bytes)
+                string = self.bytes_to_string(row_bytes, row_num)
                 print(string)
             print(self.build_command(-1, self.limit, rbk=self.rbk))
         except IOError:
