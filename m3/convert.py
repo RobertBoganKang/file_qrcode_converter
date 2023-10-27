@@ -145,12 +145,11 @@ class File2Log(object):
         return line
 
     @staticmethod
-    def bytes_to_string(b, num):
+    def bytes_to_string(b, row_num):
         """
         first byte to be the row number index of check
         """
-        num = num % 256
-        return base64.b85encode(zlib.compress(bytes([num]) + b)).decode()
+        return base64.b85encode(zlib.compress(bytes([row_num % 256]) + b)).decode()
 
     @staticmethod
     def path_to_string(path):
@@ -164,6 +163,7 @@ class File2Log(object):
             print(self.build_command(1, self.limit, rbk=self.rbk))
             # print file name
             print(self.path_to_string(path))
+            # encode contents
             row_bytes = b''
             row_num = 0
             with open(path, 'rb') as f:
@@ -184,6 +184,7 @@ class File2Log(object):
             if len(row_bytes) != 0:
                 string = self.bytes_to_string(row_bytes, row_num)
                 print(string)
+            # print end command
             print(self.build_command(-1, self.limit, rbk=self.rbk))
         except IOError:
             IOError('ERROR: error while opening the file!')
@@ -198,9 +199,9 @@ if __name__ == '__main__':
                           required=True)
     io_group.add_argument('--output', '-o', type=str, help='the target folder to decode', default=None)
 
-    # argument for image
+    # argument for log
     log_group = parser.add_argument_group('log arguments')
-    log_group.add_argument('--line_size_limit', '-s', type=int, help='the size of bytes to encode for each line',
+    log_group.add_argument('--line_size_limit', '-s', type=int, help='the size of bytes to encode for each row',
                            default=256)
 
     args = parser.parse_args()
