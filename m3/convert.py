@@ -57,7 +57,7 @@ class Log2File(object):
 
     def convert(self):
         out_folder = self.output
-        with open(self.input, 'r') as f:
+        with open(self.input, 'r', errors='ignore') as f:
             line = f.readline()
             while line:
                 string = line.strip()

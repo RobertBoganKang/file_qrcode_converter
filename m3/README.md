@@ -30,11 +30,12 @@ python convert.py -i <log_text_file_to_decode> -o <folder_to_export_decoded_file
 
 Demo with `python convert.py -i demo/example.log -o result` in this project.
 
-### Warning
+### Cheat Sheet
 
 - The log text file should be fully recorded.
 - When multiple files are encoded, files of different files should have different filenames.
 - Do not press any keys while pushing the log.
+- The larger the text within the terminal, the faster the logging.
 
 ## Disclaimer
 
