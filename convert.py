@@ -84,7 +84,7 @@ class QRDecoder(QRCommon):
 
     @staticmethod
     def string_to_byte_array(data):
-        return zlib.decompress(base64.b64decode(data))
+        return zlib.decompress(base64.b85decode(data))
 
     def get_data(self, data):
         # decode letters to bytes
@@ -137,7 +137,7 @@ class QREncoder(QRCommon):
 
     @staticmethod
     def byte_array_to_string(b):
-        return base64.b64encode(zlib.compress(bytes(b), 9))
+        return base64.b85encode(zlib.compress(bytes(b), 9))
 
     def create_chunks(self):
         with open(self.input, 'rb') as f:
