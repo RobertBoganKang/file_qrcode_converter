@@ -17,7 +17,7 @@ If the log text saving is availabel, the log file could carry much information.
 ### Encode
 
 ```bash
-python3 convert.py -i <file_to_encode>
+python convert.py -i <file_to_encode>
 ```
 
 Meanwhile, the terminal log should be recorded at the same time.
@@ -25,8 +25,10 @@ Meanwhile, the terminal log should be recorded at the same time.
 ### Decode
 
 ```bash
-python3 convert.py -i <log_text_file_to_decode> -o <folder_to_export_decoded_file>
+python convert.py -i <log_text_file_to_decode> -o <folder_to_export_decoded_file>
 ```
+
+Demo with `python convert.py -i demo/example.log -o result` in this project.
 
 ### Warning
 
