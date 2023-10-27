@@ -2,7 +2,7 @@
 
 ## Introduction
 
-If the log text saving is availabel, the log file could carry much information.
+If log text saving is available, log files can carry a lot of information for transferring files.
 
 ## Usage
 
@@ -33,7 +33,8 @@ Demo with `python convert.py -i demo/example.log -o result` in this project.
 ### Warning
 
 - The log text file should be fully recorded.
-- The file for different file should have different file name, when multiple file encoded.
+- When multiple files are encoded, files of different files should have different filenames.
+- Do not press any keys while pushing the log.
 
 ## Disclaimer
 
