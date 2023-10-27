@@ -11,7 +11,6 @@ If the log text saving is availabel, the log file could carry much information.
 * `--input`: the source file path to encode, or log text file path to decode.
 * `--output`: the target folder to decode.
 * `--line_size_limit`: the size of bytes to encode for each line.
-* `--command_string`: the string to check as start/end command.
 
 ## Usage
 
