@@ -10,7 +10,7 @@ If log text saving is available, log files can carry a lot of information for tr
 
 * `--input`: the source file path to encode, or log text file path to decode.
 * `--output`: the target folder to decode.
-* `--line_size_limit`: the size of bytes to encode for each row.
+* `--row_size`: the size of bytes to encode for each row.
 
 ## Usage
 

@@ -112,7 +112,7 @@ class File2Log(object):
 
     def __init__(self, ops):
         self.input = ops.input
-        self.limit = ops.line_size_limit
+        self.limit = ops.row_size
         self.rbk = 'rbk'
 
     @staticmethod
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 
     # argument for log
     log_group = parser.add_argument_group('log arguments')
-    log_group.add_argument('--line_size_limit', '-s', type=int, help='the size of bytes to encode for each row',
+    log_group.add_argument('--row_size', '-s', type=int, help='the size of bytes to encode for each row',
                            default=256)
 
     args = parser.parse_args()
