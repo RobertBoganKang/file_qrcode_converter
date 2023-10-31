@@ -3,8 +3,6 @@ import base64
 import os
 import zlib
 
-import chardet
-
 
 class Log2File(object):
     """
@@ -71,6 +69,7 @@ class Log2File(object):
     def convert(self):
         out_folder = self.output
         if self.encoding is None:
+            import chardet
             # guess the encoding of log from the first byte
             with open(self.input, 'rb') as f:
                 encoding_type = chardet.detect(f.read())['encoding']
