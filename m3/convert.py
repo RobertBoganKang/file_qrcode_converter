@@ -12,7 +12,8 @@ class Log2File(object):
     def __init__(self, ops):
         self.input = ops.input
         self.output = ops.output
-        self.rbk = 'rbk'
+        self.rbk = ops.command
+        assert len(self.rbk) > 0
 
     @staticmethod
     def remove_file(path):
@@ -113,7 +114,14 @@ class File2Log(object):
     def __init__(self, ops):
         self.input = ops.input
         self.limit = ops.row_size
-        self.rbk = 'rbk'
+        self.rbk = ops.command
+        self.zlib_level = ops.compress_level
+
+        assert len(self.rbk) > 0
+        self.check_zlib_level()
+
+    def check_zlib_level(self):
+        assert -1 <= self.zlib_level <= 9
 
     @staticmethod
     def build_command(command, length, rbk='rbk'):
@@ -144,17 +152,16 @@ class File2Log(object):
                 line += rbk[idx].lower()
         return line
 
-    @staticmethod
-    def bytes_to_string(b, row_num):
+    def bytes_to_string(self, b, row_num):
         """
         first byte to be the row number index of check
         """
-        return base64.b85encode(zlib.compress(bytes([row_num % 256]) + b)).decode()
+        return base64.b85encode(zlib.compress(bytes([row_num % 256]) + b), self.zlib_level).decode()
 
     @staticmethod
     def path_to_string(path):
         name = os.path.split(path)[-1]
-        return base64.b85encode(zlib.compress(name.encode())).decode()
+        return base64.b85encode(zlib.compress(name.encode(), 9)).decode()
 
     def convert(self):
         path = self.input
@@ -203,6 +210,9 @@ if __name__ == '__main__':
     log_group = parser.add_argument_group('log arguments')
     log_group.add_argument('--row_size', '-s', type=int, help='the size of bytes to encode for each row',
                            default=256)
+    log_group.add_argument('--command', '-c', type=str, help='(optional) the command string pattern', default='rbk')
+    log_group.add_argument('--compress_level', '-z', type=int,
+                           help='(optional) the compression level from -1 to 9', default=-1)
 
     args = parser.parse_args()
 
