@@ -13,6 +13,7 @@ If log text saving is available, log files can carry a lot of information for tr
 * `--row_size`: the size of bytes to encode for each row.
 * `--command`: (optional) the command string pattern.
 * `--compress_level`: (optional) the compression level from -1 to 9.
+* `--encoding`: (optional) the encoding of log file to decode, if not given -> auto detect.
 
 ## Usage
 

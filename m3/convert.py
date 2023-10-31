@@ -3,6 +3,8 @@ import base64
 import os
 import zlib
 
+import chardet
+
 
 class Log2File(object):
     """
@@ -12,6 +14,7 @@ class Log2File(object):
     def __init__(self, ops):
         self.input = ops.input
         self.output = ops.output
+        self.encoding = ops.encoding
         self.rbk = ops.command
         assert len(self.rbk) > 0
 
@@ -67,7 +70,15 @@ class Log2File(object):
 
     def convert(self):
         out_folder = self.output
-        with open(self.input, 'r', errors='ignore') as f:
+        if self.encoding is None:
+            # guess the encoding of log from the first byte
+            with open(self.input, 'rb') as f:
+                encoding_type = chardet.detect(f.read())['encoding']
+                if encoding_type is not None:
+                    print(f'INFO: guess file encoding is `{encoding_type}`')
+        else:
+            encoding_type = self.encoding
+        with open(self.input, 'r', errors='ignore', encoding=encoding_type) as f:
             line = f.readline()
             while line:
                 string = line.strip()
@@ -213,6 +224,9 @@ if __name__ == '__main__':
     log_group.add_argument('--command', '-c', type=str, help='(optional) the command string pattern', default='rbk')
     log_group.add_argument('--compress_level', '-z', type=int,
                            help='(optional) the compression level from -1 to 9', default=-1)
+    log_group.add_argument('--encoding', '-e', type=str,
+                           help='(optional) the encoding of log file to decode, if not given -> auto detect',
+                           default=None)
 
     args = parser.parse_args()
 
