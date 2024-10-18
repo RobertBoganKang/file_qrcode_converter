@@ -45,7 +45,7 @@ More methods in `./m2` and `./m3`.
 
 ## Alternatives
 
-This method is outdated, please check [cfc](https://github.com/sz3/cfc).
+This method is outdated, please check [libcimbar](https://github.com/sz3/libcimbar).
 
 ## Disclaimer
 
