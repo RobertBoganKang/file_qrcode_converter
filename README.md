@@ -43,6 +43,10 @@ Since the file name are also stored in the qr-code, for the decoding part, if th
 
 More methods in `./m2` and `./m3`.
 
+## Alternatives
+
+This method is outdated, please check [cfc](https://github.com/sz3/cfc).
+
 ## Disclaimer
 
 This project can only be used under the law of the state or country from any user.
