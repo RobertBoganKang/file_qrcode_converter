@@ -28,7 +28,12 @@ class Log2File(object):
 
     @staticmethod
     def string_to_path(string):
-        return zlib.decompress(base64.b85decode(string.encode())).decode()
+        # noinspection PyBroadException
+        try:
+            decoded_path = zlib.decompress(base64.b85decode(string.encode())).decode()
+            return decoded_path
+        except Exception:
+            return None
 
     def write_byte(self, string, row_num, w):
         if len(string) > 0:
@@ -82,12 +87,22 @@ class Log2File(object):
             while line:
                 string = line.strip()
                 outer_string_status = self.check_command(string, rbk=self.rbk)
-                if outer_string_status == 1:
-                    # read header: file name
+                # find the starting point
+                if outer_string_status != 1:
+                    # if not found, go to next line
+                    line = f.readline()
+                else:
+                    # if found, then process
+                    # read header: 1st line is the file name
                     line = f.readline()
                     string = line.strip()
                     os.makedirs(out_folder, exist_ok=True)
-                    path = os.path.join(out_folder, self.string_to_path(string))
+                    file_name = self.string_to_path(string)
+                    # if file name cannot be decoded
+                    if file_name is None:
+                        continue
+                    # if file name can be decoded, then process
+                    path = os.path.join(out_folder, file_name)
                     print(f'INFO: now decode `{path}`')
                     self.remove_file(path)
                     row_num = -1
@@ -101,7 +116,8 @@ class Log2File(object):
                                 try:
                                     row_num = self.write_byte(string, row_num, w)
                                 except Exception:
-                                    print(f'ERROR: `{path}` error, search next!')
+                                    print(f'ERROR: `{path}` error, remove file and search next!')
+                                    self.remove_file(path)
                                     break
                             elif string_status == -1:
                                 # break inner while loop
@@ -111,9 +127,6 @@ class Log2File(object):
                                 print(f'ERROR: ending command not found, remove `{path}`!')
                                 self.remove_file(path)
                                 break
-                else:
-                    # go to next line
-                    line = f.readline()
 
 
 class File2Log(object):
