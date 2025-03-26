@@ -73,13 +73,17 @@ class Log2File(object):
 
     def convert(self):
         out_folder = self.output
-        if self.encoding is None:
-            import chardet
-            # guess the encoding of log from the first byte
-            with open(self.input, 'rb') as f:
-                encoding_type = chardet.detect(f.read())['encoding']
-                if encoding_type is not None:
-                    print(f'INFO: guess file encoding is `{encoding_type}`')
+        if self.encoding is None or self.encoding == '':
+            # noinspection PyBroadException
+            try:
+                import chardet
+                # guess the encoding of log from the first byte
+                with open(self.input, 'rb') as f:
+                    encoding_type = chardet.detect(f.read())['encoding']
+                    if encoding_type is not None:
+                        print(f'INFO: guess file encoding is `{encoding_type}`')
+            except Exception:
+                encoding_type = input('Please enter the encoding type:').strip()
         else:
             encoding_type = self.encoding
         with open(self.input, 'r', errors='ignore', encoding=encoding_type) as f:
