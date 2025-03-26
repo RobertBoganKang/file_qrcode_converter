@@ -108,7 +108,7 @@ class Log2File(object):
                         print(f'INFO: guess file encoding is `{encoding_type}`')
             except Exception:
                 encoding_type = input('ERROR: package `chardet` not found!\n'
-                                      'Please enter the encoding type:').strip()
+                                      'Please enter the encoding type: ').strip()
         else:
             encoding_type = self.encoding
         with open(self.input, 'r', errors='ignore', encoding=encoding_type) as f:
