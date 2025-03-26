@@ -17,9 +17,33 @@ class Log2File(object):
         assert len(self.rbk) > 0
 
     @staticmethod
-    def remove_file(path):
+    def add_numbered_suffix(path):
+        if not os.path.exists(path):
+            return path
+
+        base, ext = os.path.splitext(path)
+        counter = 1
+        new_path = f"{base}({counter}){ext}"
+        while os.path.exists(new_path):
+            counter += 1
+            new_path = f"{base}({counter}){ext}"
+        return new_path
+
+    def remove_file(self, path, check=True):
         if os.path.exists(path):
-            os.remove(path)
+            if check:
+                while True:
+                    ck = input(f'INFO: do you wish to delete `{path}`, [yes/no]').lower()
+                    if ck == 'yes':
+                        os.remove(path)
+                        return path
+                    elif ck == 'no':
+                        return self.add_numbered_suffix(path)
+                    else:
+                        continue
+            else:
+                os.remove(path)
+                return path
 
     @staticmethod
     def string_to_bytes(s):
@@ -83,7 +107,8 @@ class Log2File(object):
                     if encoding_type is not None:
                         print(f'INFO: guess file encoding is `{encoding_type}`')
             except Exception:
-                encoding_type = input('Please enter the encoding type:').strip()
+                encoding_type = input('ERROR: package `chardet` not found!\n'
+                                      'Please enter the encoding type:').strip()
         else:
             encoding_type = self.encoding
         with open(self.input, 'r', errors='ignore', encoding=encoding_type) as f:
@@ -108,7 +133,7 @@ class Log2File(object):
                     # if file name can be decoded, then process
                     path = os.path.join(out_folder, file_name)
                     print(f'INFO: now decode `{path}`')
-                    self.remove_file(path)
+                    path = self.remove_file(path, check=True)
                     row_num = -1
                     with open(path, 'ab') as w:
                         while line:
