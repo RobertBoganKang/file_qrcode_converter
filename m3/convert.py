@@ -44,6 +44,8 @@ class Log2File(object):
             else:
                 os.remove(path)
                 return path
+        else:
+            return path
 
     @staticmethod
     def string_to_bytes(s):
