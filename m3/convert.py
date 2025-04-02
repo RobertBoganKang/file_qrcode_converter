@@ -33,12 +33,14 @@ class Log2File(object):
         if os.path.exists(path):
             if check:
                 while True:
-                    ck = input(f'INFO: do you wish to replace `{path}`, [yes/no]: ').lower()
+                    ck = input(f'INFO: replace `{path}`, or press ENTER to skip? [yes/no]: ').strip().lower()
                     if ck == 'yes':
                         os.remove(path)
                         return path
                     elif ck == 'no':
                         return self.add_numbered_suffix(path)
+                    elif ck == '':
+                        return None
                     else:
                         continue
             else:
@@ -135,7 +137,10 @@ class Log2File(object):
                     # if file name can be decoded, then process
                     path = os.path.join(out_folder, file_name)
                     print(f'INFO: now decode `{path}`')
-                    path = self.remove_file(path, check=True)
+                    check = self.remove_file(path, check=True)
+                    if check is None:
+                        print(f'INFO: skip decode `{path}`')
+                        continue
                     row_num = -1
                     with open(path, 'ab') as w:
                         while line:
