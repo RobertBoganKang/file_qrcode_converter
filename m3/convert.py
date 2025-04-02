@@ -33,7 +33,7 @@ class Log2File(object):
         if os.path.exists(path):
             if check:
                 while True:
-                    ck = input(f'INFO: do you wish to delete `{path}`, [yes/no]: ').lower()
+                    ck = input(f'INFO: do you wish to replace `{path}`, [yes/no]: ').lower()
                     if ck == 'yes':
                         os.remove(path)
                         return path
