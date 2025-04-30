@@ -55,7 +55,7 @@ class ImageCommon(object):
         # rgb channel mask
         self.rgb_channel_mask = [0, 0, 0]
         # constants
-        self.header_pixel_number = 7
+        self.header_pixel_size = 7
 
         # command line fix
         readline.set_completer_delims(' \t\n;')
@@ -110,18 +110,18 @@ class ImageCommon(object):
             # noinspection PyUnresolvedReferences
             self.image_size = [self.image_size[0], self.image_size[0]]
         # check output image size
-        if 0 < self.image_size[0] * self.image_size[1] <= self.header_pixel_number + np.ceil(8 / 3):
+        if 0 < self.image_size[0] * self.image_size[1] <= self.header_pixel_size + np.ceil(8 / 3):
             print('WARNING: the image size too small!')
             self.retype_size(array_list)
 
         retype = False
+        content_pixel_size = len(array_list) / self.rgb_channel_mask_valid + self.header_pixel_size
         if self.image_size[0] <= 0 or self.image_size[1] <= 0:
             print('--> trying to convert into one image ~')
             # set default smallest image size mode
             if self.image_size[0] <= 0 and self.image_size[1] <= 0:
                 # smallest image size mode, image with golden ratio
-                size = np.sqrt(
-                    (len(array_list) / self.rgb_channel_mask_valid + self.header_pixel_number) / self.golden_ratio)
+                size = np.sqrt(content_pixel_size / self.golden_ratio)
                 self.image_size[0] = int(np.ceil(size))
                 self.image_size[1] = int(np.ceil(self.golden_ratio * size))
                 if self.image_size[0] > self.image_size_limit[1]:
@@ -129,25 +129,19 @@ class ImageCommon(object):
                     retype = True
             # fix one image size
             elif self.image_size[0] <= 0:
-                self.image_size[0] = int(
-                    np.ceil(
-                        (len(array_list) / self.rgb_channel_mask_valid + self.header_pixel_number) / self.image_size[
-                            1]))
+                self.image_size[0] = int(np.ceil(content_pixel_size / self.image_size[1]))
                 retype = self.check_size_limit(0) or retype
             elif self.image_size[1] <= 0:
-                self.image_size[1] = int(
-                    np.ceil(
-                        (len(array_list) / self.rgb_channel_mask_valid + self.header_pixel_number) / self.image_size[
-                            0]))
+                self.image_size[1] = int(np.ceil(content_pixel_size / self.image_size[0]))
                 retype = self.check_size_limit(1) or retype
         else:
             retype = self.check_size_limit(0) or retype
             retype = self.check_size_limit(1) or retype
-        # initialize image
-        self.initialize_image_size(image_size=self.image_size)
-        # if retype, do it again
+        # if retyped, do it again
         if retype:
             self.retype_size(array_list)
+        # initialize image
+        self.initialize_image_size(image_size=self.image_size)
 
     def initialize_level(self, level=2):
         """ initialize level parameters """
@@ -162,7 +156,7 @@ class ImageCommon(object):
         self.image_size = image_size
         # given seven `1_bit` * `3-channels` pixels as header to store info
         # 3-channels * 7-pixels = 16_bit-index + 2_bit-level + 3_bit-channel_mask == 21_bits
-        body_pixels = (self.image_size[0] * self.image_size[1] - self.header_pixel_number)
+        body_pixels = (self.image_size[0] * self.image_size[1] - self.header_pixel_size)
         bytes_to_encode = int(body_pixels * self.rgb_channel_mask_valid / self.n_digits)
         self.image_data_raw_size = body_pixels * 3
         # the number of data for each image to carry
