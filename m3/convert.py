@@ -3,6 +3,8 @@ import base64
 import os
 import zlib
 
+from tqdm import tqdm
+
 
 class Log2File(object):
     """
@@ -96,8 +98,10 @@ class Log2File(object):
                 return 0
         if line[0] == rbk[0].upper():
             return -1
-        if line[0] == rbk[0].lower():
+        elif line[0] == rbk[0].lower():
             return 1
+        else:
+            return 0
 
     def convert(self):
         out_folder = self.output
@@ -142,8 +146,9 @@ class Log2File(object):
                         print(f'INFO: skip decode `{path}`')
                         continue
                     row_num = -1
-                    with open(path, 'ab') as w:
+                    with open(path, 'ab') as w, tqdm(desc="Decoding", dynamic_ncols=True) as p_bar:
                         while line:
+                            p_bar.update()
                             line = f.readline()
                             string = line.strip()
                             string_status = self.check_command(string, rbk=self.rbk)
@@ -152,15 +157,15 @@ class Log2File(object):
                                 try:
                                     row_num = self.write_byte(string, row_num, w)
                                 except Exception:
-                                    print(f'ERROR: `{path}` error, remove file and search next!')
+                                    print(f'\nERROR: `{path}` error, remove file and search next!')
                                     self.remove_file(path)
                                     break
                             elif string_status == -1:
                                 # break inner while loop
-                                print(f'INFO: `{path}` decode successfully.')
+                                print(f'\nINFO: `{path}` decode successfully.')
                                 break
                             elif string_status == 1:
-                                print(f'ERROR: ending command not found, remove `{path}`!')
+                                print(f'\nERROR: ending command not found, remove `{path}`!')
                                 self.remove_file(path)
                                 break
 
