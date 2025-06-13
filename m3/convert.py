@@ -1,5 +1,6 @@
 import argparse
 import base64
+import math
 import os
 import zlib
 
@@ -71,7 +72,7 @@ class Log2File(object):
             # row number check
             if (row_num + 1) % 256 == num:
                 w.write(byte)
-                return num
+                return num, len(byte)
             else:
                 raise ValueError('ERROR: row number is not continuous!')
         else:
@@ -102,6 +103,17 @@ class Log2File(object):
             return 1
         else:
             return 0
+
+    @staticmethod
+    def convert_size(size_bytes):
+        """ convert the number of bytes to a human-readable format (B, KB, MB, GB, TB) """
+        if size_bytes == 0:
+            return '0 B'
+        exponent = min(int(math.log2(size_bytes) / 10), 4)  # 1024 = 2^10
+        units = ['B', 'KB', 'MB', 'GB', 'TB']
+        unit = units[exponent]
+        size = size_bytes / (1024 ** exponent)
+        return f'{int(size)} {unit}' if exponent < 2 else f'{size:.2f} {unit}'
 
     def convert(self):
         out_folder = self.output
@@ -146,6 +158,7 @@ class Log2File(object):
                         print(f'INFO: skip decode `{path}`')
                         continue
                     row_num = -1
+                    file_size = 0
                     with open(path, 'ab') as w, tqdm(desc="Decoding", dynamic_ncols=True) as p_bar:
                         while line:
                             p_bar.update()
@@ -155,7 +168,9 @@ class Log2File(object):
                             if string_status == 0:
                                 # noinspection PyBroadException
                                 try:
-                                    row_num = self.write_byte(string, row_num, w)
+                                    row_num, line_size = self.write_byte(string, row_num, w)
+                                    file_size += line_size
+                                    p_bar.set_postfix({"size": self.convert_size(file_size)})
                                 except Exception:
                                     print(f'\nERROR: `{path}` error, remove file and search next!')
                                     self.remove_file(path)
